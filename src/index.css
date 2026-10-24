@@ -1,0 +1,276 @@
+body{
+    margin: 0;
+    padding: 0;
+}
+.Background{
+    background-image: url("./assets/bg.jpg");
+    background-size: cover;
+    background-position: center;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.Modal{
+    background-image: url("./assets/bg.jpg");
+    background-size: cover;
+    width: 80vw;
+    height: 80vh;
+    border: 0.5em solid rgb(37, 37, 37);
+    border-radius: 1em;
+    display: flex;
+    justify-content: right;
+}
+.Right{
+    color: whitesmoke;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: rgb(37, 37, 37);
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+#title{
+    padding: 1em;
+    align-self:flex-end;
+}
+#Slogan{
+    margin-top: -0.25em;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 4em;
+    font-weight: lighter;
+    padding: 0.5em;
+    align-self: flex-start;
+    margin-bottom: -1em;
+}
+#des{
+    padding: 2em;
+    align-self: flex-start;
+    color: rgb(153, 152, 152);
+    font-weight: bold;
+}
+#entrybtn{
+    background-color: black;
+    border: none;
+    color: whitesmoke;
+    height: 10%;
+    width: 90%;
+    border-radius: 3em;
+    font-size: 1.5em;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+#entrybtn:hover{
+    background-color: rgb(46, 45, 45);
+    transition: all 0.2s ease;
+    font-size: 2em;
+}
+#entryftr{
+    color: rgb(153, 152, 152);
+    font-weight: bold;
+    align-self: flex-end;
+    padding: 1em;
+    margin-top: 10em;
+}
+
+.DashBG {
+  background-image: url("./assets/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---------- Sidebar ---------- */
+.Tree {
+  --text: #f2f2f2;
+  --muted: #8a8a8a;
+  --line: rgba(255, 255, 255, 0.07);
+
+  width: 340px;
+  min-width: 260px;
+  flex-shrink: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px 20px 24px;
+  background-color: #141414c4;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: none;
+  border-top-left-radius: 24px;
+  overflow-y: auto;
+}
+
+.window-dots {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.window-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 20px;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.brand-logo {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: #fff;
+  color: #141414;
+  font-weight: 700;
+  font-family: monospace;
+}
+.brand-name {
+  flex: 1;
+  text-align: left;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 1.4rem;
+}
+.brand svg {
+  color: var(--muted);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+}
+.search input::placeholder {
+  color: var(--muted);
+}
+.search:focus-within {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.search kbd {
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+/* ---------- Nav groups ---------- */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.group-label {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #b9b9b9;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+.nav-item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+.nav-item svg {
+  flex-shrink: 0;
+  color: #9a9a9a;
+}
+.nav-item.active svg {
+  color: var(--text);
+}
+
+.ext-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Main ---------- */
+.Main {
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+  color: #f2f2f2;
+  background: #14141460;
+  border-top-right-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: none;
+}
+.main-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 32px;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 800px) {
+  .DashBG {
+    padding: 0;
+  }
+  .Tree {
+    width: 240px;
+    border-top-left-radius: 0;
+  }
+  .Main {
+    border-top-right-radius: 0;
+  }
+}
