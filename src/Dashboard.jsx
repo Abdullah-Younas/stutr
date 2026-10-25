@@ -8,9 +8,10 @@ import {
   Wand2,
   Braces,
   CircleAlert,
-  ChevronsUpDown,
   Search,
 } from 'lucide-react'
+
+import { useRef, useState } from 'react'
 
 const sections = [
   {
@@ -41,7 +42,58 @@ const sections = [
   },
 ]
 
+const tabs = ['Code', 'Editor']
+
+function CodeEditor() {
+  const [code, setCode] = useState('')
+  const gutterRef = useRef(null)
+  const areaRef = useRef(null)
+
+  const lineCount = code.split('\n').length
+
+  // keep the line numbers scrolled together with the text
+  const syncScroll = (e) => {
+    gutterRef.current.scrollTop = e.target.scrollTop
+  }
+
+  // Tab inserts two spaces instead of moving focus
+  const handleKeyDown = (e) => {
+    if (e.key !== 'Tab') return
+    e.preventDefault()
+    const { selectionStart: start, selectionEnd: end } = e.target
+    setCode(code.slice(0, start) + '  ' + code.slice(end))
+    requestAnimationFrame(() => {
+      areaRef.current.selectionStart = areaRef.current.selectionEnd = start + 2
+    })
+  }
+
+  return (
+    <div className="CodeEditor">
+      <div className="gutter" ref={gutterRef} aria-hidden="true">
+        {Array.from({ length: lineCount }, (_, i) => (
+          <div key={i}>{i + 1}</div>
+        ))}
+      </div>
+      <textarea
+        ref={areaRef}
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        onScroll={syncScroll}
+        onKeyDown={handleKeyDown}
+        placeholder="Write code here…"
+        spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
+        wrap="off"
+        aria-label="Code editor"
+      />
+    </div>
+  )
+}
+
 function Dashboard() {
+  const [tab, setTab] = useState('Code')
+
   return (
     <div className="DashBG">
       <aside className="Tree">
@@ -78,10 +130,27 @@ function Dashboard() {
       </aside>
 
       <main className="Main">
-        <header className="main-head">
-          <LayoutGrid size={20} strokeWidth={1.5} />
-          <span>Workspace</span>
-        </header>
+        <div className="SelectionBar" role="tablist">
+          {tabs.map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              aria-selected={tab === name}
+              className={tab === name ? 'active' : ''}
+              onClick={() => setTab(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'Code' && <CodeEditor />}
+        {tab === 'Editor' && (
+          <div className="Grid" role="tabpanel">
+            {/* place grid items here */}
+          </div>
+        )}
       </main>
     </div>
   )
