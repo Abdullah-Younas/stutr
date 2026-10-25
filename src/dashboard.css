@@ -1,0 +1,108 @@
+/* Imported by Dashboard.jsx after index.css, so it wins on equal specificity.
+   Everything the new UI needs is here (this includes the canvas styles). */
+
+/* ---------- Main area: tabs stay level with the logo, panels use the rest ---------- */
+.Main { padding: 20px 12px 12px; box-sizing: border-box; }
+
+/* ---------- Sidebar buttons: black with white text ---------- */
+.Tree .group { gap: 6px; }
+.Tree .nav-item {
+  width: 100%; box-sizing: border-box; background: #000; color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1); font: inherit; text-align: left; cursor: pointer;
+}
+.Tree .nav-item:hover { background: #1c1c1c; }
+.Tree .nav-item svg { color: #fff; }
+.Tree .nav-item.active { border-color: rgba(255, 255, 255, 0.45); }
+.Tree .badge {
+  margin-left: auto; padding: 2px 8px; font: 0.75rem monospace; font-style: normal;
+  text-transform: capitalize; color: #b9b9b9; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
+}
+.glyph { width: 22px; text-align: center; font-family: monospace; font-size: 0.95rem; color: #fff; }
+
+/* ---------- Modal ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px);
+}
+.modal {
+  width: min(560px, 100%); max-height: min(640px, 100%); display: flex; flex-direction: column;
+  background: #101010; color: #f2f2f2; border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px; box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+.modal header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 14px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.modal h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.modal .x { display: grid; place-items: center; width: 32px; height: 32px; color: #b9b9b9; background: none; border: none; border-radius: 8px; cursor: pointer; }
+.modal .x:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.modal-body { padding: 16px 20px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.modal h4 { margin: 4px 0 8px; font-size: 0.85rem; font-weight: 500; color: #8a8a8a; }
+.modal-search {
+  flex: 1; min-width: 0; padding: 10px 12px; color: #f2f2f2; font: inherit; outline: none;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
+}
+.modal-search:focus { border-color: rgba(255, 255, 255, 0.3); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.tile {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px;
+  background: #000; color: #fff; font: inherit; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px;
+}
+.tile:hover { background: #1c1c1c; }
+.tile.active { border-color: #fff; }
+.row { display: flex; gap: 8px; }
+.btn {
+  padding: 8px 14px; background: #000; color: #fff; font: inherit; white-space: nowrap; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px;
+}
+.btn:hover { background: #1c1c1c; }
+.btn.ghost { color: #ff8a80; border-color: rgba(255, 138, 128, 0.35); }
+.item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
+.item > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.item small { color: #8a8a8a; }
+.empty { margin: 0; color: #8a8a8a; }
+.docs { margin: 0; padding: 14px; overflow: auto; font: 13px/1.7 monospace; white-space: pre; background: #000; border-radius: 12px; }
+
+/* ---------- Editor tab: the canvas fills the whole panel ---------- */
+.circuit {
+  position: relative; flex: 1; min-height: 0; margin-top: 12px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px;
+}
+.circuit svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; }
+.circuit.tool-wire svg { cursor: crosshair; }
+.circuit.tool-erase svg { cursor: not-allowed; }
+.circuit.tool-AND svg, .circuit.tool-OR svg, .circuit.tool-NOT svg, .circuit.tool-NAND svg,
+.circuit.tool-NOR svg, .circuit.tool-XOR svg, .circuit.tool-IN svg, .circuit.tool-OUT svg { cursor: copy; }
+.CodeEditor { margin-top: 12px; }
+
+.wire { fill: none; stroke: #2f6b4a; stroke-width: 3; stroke-linejoin: round; }
+.wire.hi { stroke: #3ddc84; }
+.part rect, .part circle { fill: #181818; stroke: #cfcfcf; stroke-width: 2; }
+.part rect.on { fill: #1f5a3a; stroke: #3ddc84; }
+.part.sel rect { stroke: #7cc4ff; }
+.part text { fill: #f2f2f2; font: 600 15px monospace; pointer-events: none; }
+.part text.lbl { font-size: 13px; fill: #9a9a9a; }
+.pin { fill: #141414; stroke: #8a8a8a; stroke-width: 1.5; }
+.circuit.tool-wire .pin:hover, .pin.pending { stroke: #3ddc84; fill: #3ddc84; }
+
+.hint {
+  position: absolute; left: 16px; bottom: 16px; padding: 6px 12px; font-size: 0.85rem; color: #b9b9b9;
+  background: rgba(8, 8, 8, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
+}
+.inspector {
+  position: absolute; top: 16px; right: 16px; width: 200px; padding: 14px; font-size: 0.9rem; color: #f2f2f2;
+  background: rgba(8, 8, 8, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px;
+}
+.inspector h4 { margin: 0 0 10px; font-family: monospace; }
+.inspector label { display: flex; flex-direction: column; gap: 4px; color: #8a8a8a; }
+.inspector input {
+  padding: 6px 8px; background: rgba(255, 255, 255, 0.05); color: #f2f2f2; font: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; outline: none;
+}
+.inspector p { display: flex; justify-content: space-between; margin: 10px 0 0; color: #8a8a8a; }
+.inspector p span { color: #f2f2f2; font-family: monospace; }
+.inspector button {
+  width: 100%; margin-top: 12px; padding: 7px; color: #ff8a80; font: inherit; cursor: pointer;
+  background: none; border: 1px solid rgba(255, 138, 128, 0.35); border-radius: 8px;
+}

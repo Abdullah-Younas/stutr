@@ -386,3 +386,12 @@ body{
 .CodeEditor textarea::placeholder {
   color: #5c5c5c;
 }
+
+/* add to the bottom of index.css (keep circuit.css from before) */
+.CodeEditor { position: relative; }
+.codebar {
+  position: absolute; left: 12px; bottom: 12px; right: 12px; padding: 6px 12px;
+  font: 0.8rem system-ui, sans-serif; color: #8a8a8a;
+  background: rgba(8, 8, 8, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
+}
+.codebar.err { color: #ff8a80; border-color: rgba(255, 138, 128, 0.4); }
