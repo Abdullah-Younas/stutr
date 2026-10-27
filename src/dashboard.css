@@ -25,7 +25,8 @@
   background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px);
 }
 .modal {
-  width: min(560px, 100%); max-height: min(640px, 100%); display: flex; flex-direction: column;
+  width: min(700px, 100%); max-height: calc(100vh - 48px);
+  max-height: min(680px, calc(100dvh - 48px)); display: flex; flex-direction: column;
   background: #101010; color: #f2f2f2; border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px; box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 }
@@ -36,7 +37,7 @@
 .modal h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
 .modal .x { display: grid; place-items: center; width: 32px; height: 32px; color: #b9b9b9; background: none; border: none; border-radius: 8px; cursor: pointer; }
 .modal .x:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
-.modal-body { padding: 16px 20px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.modal-body { min-height: 0; padding: 16px 20px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 .modal h4 { margin: 4px 0 8px; font-size: 0.85rem; font-weight: 500; color: #8a8a8a; }
 .modal-search {
   flex: 1; min-width: 0; padding: 10px 12px; color: #f2f2f2; font: inherit; outline: none;
@@ -106,3 +107,13 @@
   width: 100%; margin-top: 12px; padding: 7px; color: #ff8a80; font: inherit; cursor: pointer;
   background: none; border: 1px solid rgba(255, 138, 128, 0.35); border-radius: 8px;
 }
+
+/* ---------- part library additions ---------- */
+.part text.pl { font: 400 10px monospace; fill: #8a8a8a; }
+.part rect.led { fill: #ff4d4d; stroke: #ff9a9a; }
+.part rect.seg { fill: #262626; stroke: none; }
+.part rect.seg.on { fill: #ff4d4d; }
+.tile .glyph { min-height: 22px; line-height: 22px; }
+.tile small { font-size: 0.7rem; color: #8a8a8a; }
+.tile.soon { opacity: 0.4; cursor: not-allowed; }
+.tile.soon:hover { background: #000; }

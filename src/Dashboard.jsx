@@ -4,20 +4,78 @@ import { Hand, MousePointer2, Cable, Eraser, Search, Wrench, FilePlus, Folder, G
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 /* ================= circuit model ================= */
-const GATES = {
-  AND: { ins: 2, sym: '&', f: (a) => a[0] && a[1] },
-  OR: { ins: 2, sym: '≥1', f: (a) => a[0] || a[1] },
-  NOT: { ins: 1, sym: '1', neg: true, f: (a) => !a[0] },
-  NAND: { ins: 2, sym: '&', neg: true, f: (a) => !(a[0] && a[1]) },
-  NOR: { ins: 2, sym: '≥1', neg: true, f: (a) => !(a[0] || a[1]) },
-  XOR: { ins: 2, sym: '=1', f: (a) => a[0] !== a[1] },
+const N = '' // unlabeled pin
+// ins / outs = pin labels. f(inputs, part) -> output bits. Clocked parts ("seq") keep their state in part.s
+const def = (sym, ins, outs, f, x = {}) => ({ sym, ins, outs, f, ...x })
+const gate = (sym, n, f, x) => def(sym, Array(n).fill(N), [N], (a) => [f(a)], x)
+const odd = (a) => a.filter(Boolean).length % 2 === 1
+const count = (a) => a.filter(Boolean).length
+const flop = (sym, ins, next, outs = ['Q', '!Q'], q = (c) => [!!c.s, !c.s]) =>
+  def(sym, ins, outs, null, { seq: true, clk: 1, next, q })
+
+const DEFS = {
+  IN: def('0', [], [N], (_, c) => [c.on], { toggle: true, bit: true, w: 40, h: 40 }),
+  CLK: def('CK', [], [N], (_, c) => [c.on], { toggle: true, w: 40, h: 40 }),
+  BTN: def('0', [], [N], (_, c) => [c.on], { bit: true, w: 40, h: 40 }),
+  CONST: def('1', [], [N], () => [true], { bit: true, w: 40, h: 40 }),
+  POWER: def('+V', [], [N], () => [true], { w: 40, h: 40 }),
+  GND: def('GND', [], [N], () => [false], { w: 40, h: 40 }),
+  OUT: def('0', [N], [], () => [], { bit: true, round: true, w: 40, h: 40 }),
+  LED: def('', [N], [], () => [], { led: true, round: true, w: 40, h: 40 }),
+  SEG7: def('', ['a', 'b', 'c', 'd', 'e', 'f', 'g'], [], () => [], { seg: true, w: 80 }),
+  HEX: def('', ['1', '2', '4', '8'], [], () => [], { seg: true, w: 70 }),
+
+  NOT: gate('1', 1, (a) => !a[0], { neg: true }),
+  BUF: gate('1', 1, (a) => a[0]),
+  AND: gate('&', 2, (a) => a[0] && a[1]),
+  OR: gate('≥1', 2, (a) => a[0] || a[1]),
+  NAND: gate('&', 2, (a) => !(a[0] && a[1]), { neg: true }),
+  NOR: gate('≥1', 2, (a) => !(a[0] || a[1]), { neg: true }),
+  XOR: gate('=1', 2, (a) => a[0] !== a[1]),
+  XNOR: gate('=1', 2, (a) => a[0] === a[1], { neg: true }),
+  ODD: gate('2k+1', 3, odd),
+  EVEN: gate('2k', 3, (a) => !odd(a)),
+  CBUF: def('EN', ['D', 'E'], [N], (a) => [a[1] && a[0]]),
+  CINV: def('EN', ['D', 'E'], [N], (a) => [a[1] && !a[0]], { neg: true }),
+
+  MUX: def('MUX', ['0', '1', 'S'], [N], (a) => [a[2] ? a[1] : a[0]]),
+  DEMUX: def('DMX', ['D', 'S'], ['0', '1'], (a) => [a[0] && !a[1], a[0] && a[1]]),
+  DEC: def('DEC', ['S0', 'S1'], ['0', '1', '2', '3'], (a) => [0, 1, 2, 3].map((k) => (a[0] ? 1 : 0) + (a[1] ? 2 : 0) === k)),
+  PENC: def('PRI', ['0', '1', '2', '3'], ['Y0', 'Y1', 'V'], (a) => {
+    const k = a.lastIndexOf(true)
+    return [k >= 0 && !!(k & 1), k >= 0 && !!(k & 2), k >= 0]
+  }),
+
+  ADD: def('+', ['A', 'B', 'Ci'], ['S', 'Co'], (a) => [count(a) % 2 === 1, count(a) >= 2]),
+  SUB: def('-', ['A', 'B', 'Bi'], ['D', 'Bo'], (a) => {
+    const d = (a[0] ? 1 : 0) - (a[1] ? 1 : 0) - (a[2] ? 1 : 0)
+    return [(d & 1) === 1, d < 0]
+  }),
+  CMP: def('CMP', ['A', 'B'], ['>', '=', '<'], (a) => [a[0] && !a[1], a[0] === a[1], !a[0] && a[1]]),
+  BADD: def('Σ', ['0', '1', '2'], ['1s', '2s'], (a) => [(count(a) & 1) === 1, (count(a) & 2) === 2]),
+
+  DFF: flop('D', ['D', '>'], (i) => i[0]),
+  TFF: flop('T', ['T', '>'], (i, c) => (i[0] ? !c.s : !!c.s)),
+  JKFF: flop('JK', ['J', '>', 'K'], (i, c) => (i[0] ? (i[2] ? !c.s : true) : i[2] ? false : !!c.s)),
+  SRFF: flop('SR', ['S', '>', 'R'], (i, c) => (i[0] ? true : i[2] ? false : !!c.s)),
+  REG: flop('REG', ['D', '>'], (i) => i[0], ['Q'], (c) => [!!c.s]),
+  CTR: def('CTR', ['>'], ['Q0', 'Q1'], null, {
+    seq: true, clk: 0,
+    next: (_, c) => ((c.s || 0) + 1) % 4,
+    q: (c) => [!!((c.s || 0) & 1), !!((c.s || 0) & 2)],
+  }),
 }
-const PINS = { IN: { ins: 0 }, OUT: { ins: 1 } }
-const spec = (t) => GATES[t] || PINS[t]
-const size = (c) => (GATES[c.type] ? [60, 60] : [40, 40])
+
+const dims = (c) => {
+  const d = DEFS[c.type]
+  return [d.w || 60, d.h || Math.max(60, 20 * (Math.max(d.ins.length, d.outs.length) + 1))]
+}
 const snap = (v) => Math.round(v / 20) * 20
-const pinIn = (c, i) => [c.x, c.y + (size(c)[1] / (spec(c.type).ins + 1)) * (i + 1)]
-const pinOut = (c) => [c.x + size(c)[0] + (spec(c.type).neg ? 10 : 0), c.y + size(c)[1] / 2]
+const pinIn = (c, i) => [c.x, c.y + (dims(c)[1] / (DEFS[c.type].ins.length + 1)) * (i + 1)]
+const pinOut = (c, k = 0) => [
+  c.x + dims(c)[0] + (DEFS[c.type].neg ? 10 : 0),
+  c.y + (dims(c)[1] / (DEFS[c.type].outs.length + 1)) * (k + 1),
+]
 const NAME = /^[A-Za-z_]\w*$/
 
 // a part's id IS its name, so wires and code refer to the same thing
@@ -37,18 +95,61 @@ const START = {
   ],
 }
 
+/* ---- simulation: combinational parts are computed on demand, clocked parts read their stored state ---- */
+const sim = (parts, wires) => {
+  const by = Object.fromEntries(parts.map((p) => [p.id, p]))
+  const memo = {}
+  const ins = (c, seen) => DEFS[c.type].ins.map((_, i) => {
+    const w = wires.find((w) => w.to === c.id && w.pin === i)
+    return w ? !!outs(w.from, seen)[w.fp || 0] : false
+  })
+  const outs = (id, seen = new Set()) => {
+    const c = by[id]
+    if (!c) return []
+    if (memo[id]) return memo[id]
+    const d = DEFS[c.type]
+    if (d.seq) return (memo[id] = d.q(c))
+    if (seen.has(id)) return [] // combinational loop: treated as 0
+    return (memo[id] = d.f(ins(c, new Set(seen).add(id)), c))
+  }
+  return { by, outs, ins: (c) => ins(c, new Set()) }
+}
+
+// on every change: clocked parts sample their inputs on a rising clock edge (repeat so ripple chains settle)
+const settle = (circuit) => {
+  let parts = circuit.parts
+  for (let k = 0; k < 8; k++) {
+    const sm = sim(parts, circuit.wires)
+    let changed = false
+    parts = parts.map((c) => {
+      const d = DEFS[c.type]
+      if (!d.seq) return c
+      const ins = sm.ins(c)
+      const clk = ins[d.clk]
+      if (clk === !!c.pc) return c
+      changed = true
+      return clk ? { ...c, pc: clk, s: d.next(ins, c) } : { ...c, pc: clk }
+    })
+    if (!changed) break
+  }
+  return { ...circuit, parts }
+}
+
 /* ================= circuit -> code ================= */
 const gen = ({ parts, wires }) =>
   parts.map((c) => {
-    const at = ` @${c.x},${c.y}`
-    const src = (i) => wires.find((w) => w.to === c.id && w.pin === i)?.from ?? '_'
-    if (c.type === 'IN') return `in ${c.id} = ${c.on ? 1 : 0}${at}`
+    const d = DEFS[c.type], kw = c.type.toLowerCase(), at = ` @${c.x},${c.y}`
+    const src = (i) => {
+      const w = wires.find((w) => w.to === c.id && w.pin === i)
+      return w ? w.from + (w.fp ? `.${w.fp}` : '') : '_'
+    }
+    if (d.toggle) return `${kw} ${c.id} = ${c.on ? 1 : 0}${at}`
     if (c.type === 'OUT') return `out ${c.id} = ${src(0)}${at}`
-    const args = Array.from({ length: GATES[c.type].ins }, (_, i) => src(i)).join(', ')
-    return `${c.type.toLowerCase()} ${c.id}(${args})${at}`
+    return `${kw} ${c.id}(${d.ins.map((_, i) => src(i)).join(', ')})${at}`
   }).join('\n')
 
 /* ================= code -> circuit ================= */
+const SRC = /^(\w+)(?:\.(\d+))?$/
 const parse = (text) => {
   const parts = [], wires = [], errs = [], refs = []
   const add = (p, n) => {
@@ -63,31 +164,33 @@ const parse = (text) => {
     const body = at ? line.slice(0, at.index).trim() : line
     const pos = at ? { x: +at[1], y: +at[2] } : {}
     let m
-    if ((m = body.match(/^in\s+(\w+)\s*=\s*([01])$/i))) {
-      add({ id: m[1], type: 'IN', on: m[2] === '1', ...pos }, n)
-    } else if ((m = body.match(/^out\s+(\w+)\s*=\s*(\w+)$/i))) {
+    if ((m = body.match(/^(in|clk)\s+(\w+)\s*=\s*([01])$/i))) {
+      add({ id: m[2], type: m[1].toUpperCase(), on: m[3] === '1', ...pos }, n)
+    } else if ((m = body.match(/^out\s+(\w+)\s*=\s*(\S+)$/i))) {
       add({ id: m[1], type: 'OUT', ...pos }, n)
-      refs.push({ from: m[2], to: m[1], pin: 0, n })
-    } else if ((m = body.match(/^(\w+)\s+(\w+)\s*\(([^)]*)\)$/)) && GATES[m[1].toUpperCase()]) {
-      const type = m[1].toUpperCase()
+      refs.push({ src: m[2], to: m[1], pin: 0, n })
+    } else if ((m = body.match(/^(\w+)\s+(\w+)\s*\(([^)]*)\)$/)) && DEFS[m[1].toUpperCase()] && !DEFS[m[1].toUpperCase()].toggle) {
+      const type = m[1].toUpperCase(), d = DEFS[type]
       const args = m[3].split(',').map((s) => s.trim()).filter(Boolean)
-      if (args.length !== GATES[type].ins) errs.push(`Line ${n}: ${type} needs ${GATES[type].ins} input(s)`)
+      if (args.length !== d.ins.length) errs.push(`Line ${n}: ${type} needs ${d.ins.length} input(s)`)
       add({ id: m[2], type, ...pos }, n)
-      args.forEach((a, pin) => refs.push({ from: a, to: m[2], pin, n }))
+      args.forEach((a, pin) => refs.push({ src: a, to: m[2], pin, n }))
     } else errs.push(`Line ${n}: can't read "${body}"`)
   })
-  refs.forEach(({ from, to, pin, n }) => {
-    if (from === '_') return
-    const s = parts.find((p) => p.id === from)
-    if (!s || s.type === 'OUT') errs.push(`Line ${n}: "${from}" is not a part that has an output`)
-    else wires.push({ from, to, pin })
+  refs.forEach(({ src, to, pin, n }) => {
+    if (src === '_') return
+    const m = src.match(SRC)
+    const s = m && parts.find((p) => p.id === m[1])
+    const fp = m ? +(m[2] || 0) : 0
+    if (!s || fp >= DEFS[s.type].outs.length) errs.push(`Line ${n}: "${src}" is not an output of any part`)
+    else wires.push({ from: s.id, fp, to, pin })
   })
   // parts written without @x,y get placed in columns by logic depth
   const lvl = {}
   const depth = (id, seen = new Set()) => {
     if (lvl[id] != null) return lvl[id]
     const p = parts.find((x) => x.id === id)
-    if (!p || p.type === 'IN' || seen.has(id)) return 0
+    if (!p || !DEFS[p.type].ins.length || seen.has(id)) return 0
     const s = new Set(seen).add(id)
     return (lvl[id] = 1 + Math.max(0, ...wires.filter((w) => w.to === id).map((w) => depth(w.from, s))))
   }
@@ -97,7 +200,7 @@ const parse = (text) => {
     const l = depth(p.id)
     rows[l] = rows[l] || 0
     p.x = 60 + l * 140
-    p.y = 60 + rows[l]++ * 80
+    p.y = 60 + rows[l]++ * 100
   })
   return { parts, wires, errs }
 }
@@ -136,31 +239,23 @@ function CodeEditor({ code, onChange, err }) {
 
 /* ================= Editor tab ================= */
 const HINTS = {
-  poke: 'Poke: click an input to flip it',
-  select: 'Select: drag parts, Delete removes the selection',
+  poke: 'Poke: click an input or clock to flip it, hold a button to press it',
+  select: 'Edit: drag parts, Delete removes the selection',
   wire: 'Wire: click an output pin, then an input pin',
   erase: 'Erase: click a part or a wire',
 }
+const SEGS = { a: [6, 0, 28, 6], b: [34, 6, 6, 28], c: [34, 38, 6, 28], d: [6, 66, 28, 6], e: [0, 38, 6, 28], f: [0, 6, 6, 28], g: [6, 33, 28, 6] }
+const HEXMAP = ['abcdef', 'bc', 'abdeg', 'abcdg', 'bcfg', 'acdfg', 'acdefg', 'abc', 'abcdefg', 'abcdfg', 'abcefg', 'cdefg', 'adef', 'bcdeg', 'adefg', 'aefg']
 
 function Circuit({ circuit, update, tool, setTool }) {
   const { parts, wires } = circuit
   const [sel, setSel] = useState(null)
   const [pending, setPending] = useState(null)
   const drag = useRef(null)
+  const held = useRef(null)
   const svg = useRef(null)
-  const byId = useMemo(() => Object.fromEntries(parts.map((p) => [p.id, p])), [parts])
-
-  const val = (id, seen = new Set()) => {
-    const c = byId[id]
-    if (!c || seen.has(id)) return false
-    if (c.type === 'IN') return c.on
-    const s = new Set(seen).add(id)
-    const ins = Array.from({ length: spec(c.type).ins }, (_, i) => {
-      const w = wires.find((w) => w.to === id && w.pin === i)
-      return w ? val(w.from, s) : false
-    })
-    return c.type === 'OUT' ? ins[0] : GATES[c.type].f(ins)
-  }
+  const S = useMemo(() => sim(parts, wires), [parts, wires])
+  const byId = S.by
 
   const point = (e) => {
     const r = svg.current.getBoundingClientRect()
@@ -180,7 +275,7 @@ function Circuit({ circuit, update, tool, setTool }) {
     setSel(name)
   }
   const fresh = (type) => {
-    const base = type === 'IN' ? 'in' : type === 'OUT' ? 'out' : type.toLowerCase()
+    const base = type.toLowerCase()
     let i = 1
     while (byId[base + i]) i++
     return base + i
@@ -196,10 +291,14 @@ function Circuit({ circuit, update, tool, setTool }) {
     return () => window.removeEventListener('keydown', onKey)
   })
 
+  const release = () => {
+    drag.current = null
+    if (held.current) { patch(held.current, { on: false }); held.current = null }
+  }
   const onCanvasDown = (e) => {
     setSel(null); setPending(null)
-    if (!spec(tool)) return
-    const [x, y] = point(e), [w, h] = size({ type: tool })
+    if (!DEFS[tool]) return
+    const [x, y] = point(e), [w, h] = dims({ type: tool })
     const id = fresh(tool)
     update((c) => ({ ...c, parts: [...c.parts, { id, type: tool, x: snap(x - w / 2), y: snap(y - h / 2), on: false }] }))
     setSel(id)
@@ -207,7 +306,10 @@ function Circuit({ circuit, update, tool, setTool }) {
   const onPartDown = (e, c) => {
     e.stopPropagation()
     if (tool === 'erase') return remove(c.id)
-    if (tool === 'poke' && c.type === 'IN') return patch(c.id, { on: !c.on })
+    if (tool === 'poke') {
+      if (DEFS[c.type].toggle) return patch(c.id, { on: !c.on })
+      if (c.type === 'BTN') { held.current = c.id; return patch(c.id, { on: true }) }
+    }
     setSel(c.id)
     if (tool === 'select' || tool === 'poke') {
       const [x, y] = point(e)
@@ -219,21 +321,24 @@ function Circuit({ circuit, update, tool, setTool }) {
     const [x, y] = point(e)
     patch(drag.current.id, { x: snap(x - drag.current.ox), y: snap(y - drag.current.oy) })
   }
-  const onPin = (e, c, i) => {
+  const onPin = (e, c, i, k = 0) => {
     e.stopPropagation()
     if (tool !== 'wire') return
-    if (i === 'out') return setPending(c.id)
-    if (pending == null || pending === c.id) return
-    update((k) => ({ ...k, wires: [...k.wires.filter((w) => !(w.to === c.id && w.pin === i)), { from: pending, to: c.id, pin: i }] }))
+    if (i === 'out') return setPending({ id: c.id, k })
+    if (!pending) return
+    update((m) => ({
+      ...m,
+      wires: [...m.wires.filter((w) => !(w.to === c.id && w.pin === i)), { from: pending.id, fp: pending.k, to: c.id, pin: i }],
+    }))
     setPending(null)
   }
 
   const cur = byId[sel]
+  const vals = cur ? (DEFS[cur.type].outs.length ? S.outs(cur.id) : S.ins(cur)) : []
 
   return (
     <div className={`circuit tool-${tool}`}>
-      <svg ref={svg} onPointerDown={onCanvasDown} onPointerMove={onMove}
-        onPointerUp={() => (drag.current = null)} onPointerLeave={() => (drag.current = null)}>
+      <svg ref={svg} onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={release}>
         <defs>
           <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.14)" />
@@ -244,21 +349,35 @@ function Circuit({ circuit, update, tool, setTool }) {
         {wires.map((w, i) => {
           const a = byId[w.from], b = byId[w.to]
           if (!a || !b) return null
-          const [x1, y1] = pinOut(a), [x2, y2] = pinIn(b, w.pin), mx = (x1 + x2) / 2
+          const [x1, y1] = pinOut(a, w.fp || 0), [x2, y2] = pinIn(b, w.pin), mx = (x1 + x2) / 2
           return (
-            <path key={i} d={`M${x1} ${y1}H${mx}V${y2}H${x2}`} className={`wire ${val(w.from) ? 'hi' : ''}`}
+            <path key={i} d={`M${x1} ${y1}H${mx}V${y2}H${x2}`} className={`wire ${S.outs(w.from)[w.fp || 0] ? 'hi' : ''}`}
               onPointerDown={(e) => { e.stopPropagation(); if (tool === 'erase') update((k) => ({ ...k, wires: k.wires.filter((_, j) => j !== i) })) }} />
           )
         })}
 
         {parts.map((c) => {
-          const [w, h] = size(c), g = GATES[c.type], on = val(c.id)
+          const d = DEFS[c.type], [w, h] = dims(c), ins = S.ins(c), o = S.outs(c.id)
+          const on = d.outs.length ? !!o[0] : !!ins[0]
+          const lit = !d.seg ? '' : c.type === 'SEG7'
+            ? 'abcdefg'.split('').filter((_, i) => ins[i]).join('')
+            : HEXMAP[ins.reduce((n, b, i) => n + (b ? 1 << i : 0), 0)]
           return (
             <g key={c.id} transform={`translate(${c.x} ${c.y})`} onPointerDown={(e) => onPartDown(e, c)}
               className={`part ${sel === c.id ? 'sel' : ''}`}>
-              <rect width={w} height={h} rx={c.type === 'OUT' ? 20 : 6} className={on && !g ? 'on' : ''} />
-              <text x={w / 2} y={h / 2 + 5} textAnchor="middle">{g ? g.sym : on ? '1' : '0'}</text>
-              {g?.neg && <circle cx={w + 5} cy={h / 2} r="5" />}
+              <rect width={w} height={h} rx={d.round ? 20 : 6} className={d.led ? (on ? 'led' : '') : d.bit && on ? 'on' : ''} />
+              {d.seg ? (
+                <g transform={`translate(${(w - 40) / 2} ${(h - 72) / 2})`}>
+                  {Object.entries(SEGS).map(([k, [x, y, sw, sh]]) => (
+                    <rect key={k} x={x} y={y} width={sw} height={sh} rx="2" className={`seg${lit.includes(k) ? ' on' : ''}`} />
+                  ))}
+                </g>
+              ) : (
+                <text x={w / 2} y={h / 2 + 5} textAnchor="middle">{d.bit ? (on ? 1 : 0) : d.sym}</text>
+              )}
+              {d.neg && <circle cx={w + 5} cy={h / 2} r="5" />}
+              {d.ins.map((l, i) => l && <text key={'i' + i} x="6" y={pinIn(c, i)[1] - c.y + 4} className="pl">{l}</text>)}
+              {d.outs.map((l, k) => l && <text key={'o' + k} x={w - 6} y={pinOut(c, k)[1] - c.y + 4} textAnchor="end" className="pl">{l}</text>)}
               <text x={w / 2} y={-8} textAnchor="middle" className="lbl">{c.id}</text>
             </g>
           )
@@ -266,13 +385,13 @@ function Circuit({ circuit, update, tool, setTool }) {
 
         {parts.map((c) => (
           <g key={'p' + c.id}>
-            {Array.from({ length: spec(c.type).ins }, (_, i) => (
-              <circle key={i} cx={pinIn(c, i)[0]} cy={pinIn(c, i)[1]} r="5" className="pin" onPointerDown={(e) => onPin(e, c, i)} />
+            {DEFS[c.type].ins.map((_, i) => (
+              <circle key={'i' + i} cx={pinIn(c, i)[0]} cy={pinIn(c, i)[1]} r="5" className="pin" onPointerDown={(e) => onPin(e, c, i)} />
             ))}
-            {c.type !== 'OUT' && (
-              <circle cx={pinOut(c)[0]} cy={pinOut(c)[1]} r="5" className={`pin ${pending === c.id ? 'pending' : ''}`}
-                onPointerDown={(e) => onPin(e, c, 'out')} />
-            )}
+            {DEFS[c.type].outs.map((_, k) => (
+              <circle key={'o' + k} cx={pinOut(c, k)[0]} cy={pinOut(c, k)[1]} r="5"
+                className={`pin${pending?.id === c.id && pending.k === k ? ' pending' : ''}`} onPointerDown={(e) => onPin(e, c, 'out', k)} />
+            ))}
           </g>
         ))}
       </svg>
@@ -286,7 +405,7 @@ function Circuit({ circuit, update, tool, setTool }) {
             <input value={cur.id} onChange={(e) => rename(cur.id, e.target.value)} />
           </label>
           <p>Position <span>{cur.x}, {cur.y}</span></p>
-          <p>Output <span>{val(cur.id) ? 1 : 0}</span></p>
+          <p>{DEFS[cur.type].outs.length ? 'Outputs' : 'Inputs'} <span>{vals.map(Number).join(' ') || '-'}</span></p>
           <button type="button" onClick={() => remove(cur.id)}>Delete</button>
         </aside>
       )}
@@ -315,17 +434,39 @@ function Modal({ title, onClose, children }) {
   )
 }
 
-const PARTS = [
-  { label: 'Tools', items: [
-    { name: 'Poke', icon: Hand, tool: 'poke' },
-    { name: 'Select', icon: MousePointer2, tool: 'select' },
-    { name: 'Wire', icon: Cable, tool: 'wire' },
-    { name: 'Erase', icon: Eraser, tool: 'erase' },
+// T(name, tool, glyph, icon): tool null = listed but not built yet
+const T = (name, tool, glyph, icon) => ({ name, tool, glyph, icon })
+const CATALOG = [
+  { label: 'Base', items: [
+    T('Poke Tool', 'poke', null, Hand), T('Edit Tool', 'select', null, MousePointer2), T('Select Tool', null, 'box'),
+    T('Wiring Tool', 'wire', null, Cable), T('Erase Tool', 'erase', null, Eraser),
+    T('Text Tool', null, 'Aa'), T('Menu Tool', null, 'menu'), T('Label', null, 'lbl'),
   ] },
-  { label: 'Gates', items: ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'].map((n) => ({ name: n, glyph: GATES[n].sym, tool: n })) },
-  { label: 'Pins', items: [
-    { name: 'Input', glyph: 'in', tool: 'IN' },
-    { name: 'Output', glyph: 'out', tool: 'OUT' },
+  { label: 'Wiring', items: [
+    T('Splitter', null, 'spl'), T('Pin', 'IN', 'in'), T('Probe', 'OUT', 'out'), T('Tunnel', null, 'tun'),
+    T('Pull Resistor', null, 'pull'), T('Clock', 'CLK', 'CK'), T('Constant', 'CONST', '1'), T('Power', 'POWER', '+V'),
+    T('Ground', 'GND', 'GND'), T('Transistor', null, 'Tr'), T('Transmission Gate', null, 'TG'), T('Bit Extender', null, 'ext'),
+  ] },
+  { label: 'Gates', items: [
+    T('NOT Gate', 'NOT'), T('Buffer', 'BUF'), T('AND Gate', 'AND'), T('OR Gate', 'OR'), T('NAND Gate', 'NAND'), T('NOR Gate', 'NOR'),
+    T('XOR Gate', 'XOR'), T('XNOR Gate', 'XNOR'), T('Odd Parity', 'ODD'), T('Even Parity', 'EVEN'),
+    T('Controlled Buffer', 'CBUF'), T('Controlled Inverter', 'CINV'),
+  ] },
+  { label: 'Plexers', items: [
+    T('Multiplexer', 'MUX'), T('Demultiplexer', 'DEMUX'), T('Decoder', 'DEC'), T('Priority Encoder', 'PENC'), T('Bit Selector', null, 'sel'),
+  ] },
+  { label: 'Arithmetic', items: [
+    T('Adder', 'ADD'), T('Subtractor', 'SUB'), T('Multiplier', null, 'x'), T('Divider', null, '/'), T('Negator', null, '-x'),
+    T('Comparator', 'CMP'), T('Shifter', null, '>>'), T('Bit Adder', 'BADD'), T('Bit Finder', null, '?'),
+  ] },
+  { label: 'Memory', items: [
+    T('D Flip-Flop', 'DFF'), T('T Flip-Flop', 'TFF'), T('J-K Flip-Flop', 'JKFF'), T('S-R Flip-Flop', 'SRFF'),
+    T('Register', 'REG'), T('Counter', 'CTR'), T('Shift Register', null, 'shr'), T('Random Generator', null, 'rnd'),
+    T('RAM', null, 'RAM'), T('ROM', null, 'ROM'),
+  ] },
+  { label: 'Input/Output', items: [
+    T('Button', 'BTN', 'btn'), T('Joystick', null, 'joy'), T('Keyboard', null, 'key'), T('LED', 'LED', 'led'),
+    T('7-Segment Display', 'SEG7', '7seg'), T('Hex Digit Display', 'HEX', 'hex'), T('LED Matrix', null, 'mat'), T('TTY', null, 'tty'),
   ] },
 ]
 
@@ -334,17 +475,19 @@ function ToolPicker({ tool, onPick }) {
   return (
     <>
       <input className="modal-search" autoFocus placeholder="Search tools and parts" value={q} onChange={(e) => setQ(e.target.value)} />
-      {PARTS.map((s) => {
+      {CATALOG.map((s) => {
         const items = s.items.filter((i) => i.name.toLowerCase().includes(q.toLowerCase()))
         if (!items.length) return null
         return (
           <section key={s.label}>
             <h4>{s.label}</h4>
             <div className="tiles">
-              {items.map(({ name, icon: Icon, glyph, tool: t }) => (
-                <button key={name} type="button" className={`tile${tool === t ? ' active' : ''}`} onClick={() => onPick(t)}>
-                  {Icon ? <Icon size={22} strokeWidth={1.5} /> : <span className="glyph">{glyph}</span>}
+              {items.map(({ name, tool: t, glyph, icon: Icon }) => (
+                <button key={name} type="button" disabled={!t} title={t ? name : 'Not built yet'}
+                  className={`tile${tool === t ? ' active' : ''}${t ? '' : ' soon'}`} onClick={() => onPick(t)}>
+                  {Icon ? <Icon size={22} strokeWidth={1.5} /> : <span className="glyph">{glyph ?? DEFS[t].sym}</span>}
                   <span>{name}</span>
+                  {!t && <small>soon</small>}
                 </button>
               ))}
             </div>
@@ -390,6 +533,10 @@ function Projects({ code, onOpen }) {
 }
 
 const EXAMPLES = [
+  { name: 'Clock divider', note: 'Poke the clock: the flip-flop toggles on every rising edge.',
+    code: ['clk ck = 0', 'dff f(f.1, ck)', 'out Q = f'].join('\n') },
+  { name: '2-bit counter', note: 'Poke the clock to count 0 to 3.',
+    code: ['clk ck = 0', 'ctr c(ck)', 'out Q0 = c', 'out Q1 = c.1'].join('\n') },
   { name: 'Half adder', note: 'Adds two bits: XOR is the sum, AND is the carry.',
     code: ['in A = 1', 'in B = 1', 'xor sum(A, B)', 'and carry(A, B)', 'out S = sum', 'out C = carry'].join('\n') },
   { name: 'Full adder', note: 'Adds two bits plus a carry-in.',
@@ -401,13 +548,16 @@ const EXAMPLES = [
 ]
 
 const DOCS = [
-  'in A = 1            input, 0 or 1',
-  'and g1(A, B)        gates: and or not nand nor xor',
-  'out Y = g1          output fed by any part',
+  'in A = 1            input (clk makes a clock, same syntax)',
+  'and g1(A, B)        any part: and or not xor mux add cmp dff ...',
+  'add a(A, B, C)      a = first output, a.1 = second output',
+  'out Y = a.1         output fed by that pin',
+  'dff f(f.1, ck)      flip-flop, pin order is shown on the canvas',
   '_                   leave a pin empty',
   '@x,y                optional position (the editor adds it)',
   '// text             comment',
 ].join('\n')
+
 
 /* ================= Dashboard ================= */
 const NAV = [
@@ -436,7 +586,7 @@ export default function Dashboard() {
 
   // editor -> code: every canvas change rewrites the text
   const update = (fn) => {
-    const next = fn(circuit)
+    const next = settle(fn(circuit))
     setCircuit(next)
     setCode(gen(next))
     setErr('')
@@ -447,7 +597,7 @@ export default function Dashboard() {
     const r = parse(text)
     if (r.errs.length) return setErr(r.errs[0])
     setErr('')
-    setCircuit({ parts: r.parts, wires: r.wires })
+    setCircuit(settle({ parts: r.parts, wires: r.wires }))
   }
   const load = (text) => { onCode(text); close(); setTab('Editor') }
 
