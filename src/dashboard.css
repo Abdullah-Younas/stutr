@@ -117,3 +117,24 @@
 .tile small { font-size: 0.7rem; color: #8a8a8a; }
 .tile.soon { opacity: 0.4; cursor: not-allowed; }
 .tile.soon:hover { background: #000; }
+
+/* ---------- buses, notes, devices, selection ---------- */
+.wire.bus { stroke-width: 5; }
+.part rect.note { fill: transparent; stroke: #555; stroke-dasharray: 4 3; }
+.part text.mono { font: 400 12px monospace; }
+.part circle.dot { fill: #262626; stroke: none; }
+.part circle.dot.on { fill: #ff4d4d; }
+.part circle.knob { fill: #7cc4ff; stroke: none; }
+.band { fill: rgba(124, 196, 255, 0.12); stroke: #7cc4ff; stroke-dasharray: 4 3; pointer-events: none; }
+.circuit.tool-box svg { cursor: crosshair; }
+.circuit.tool-menu svg, .circuit.tool-label svg { cursor: help; }
+.ctx {
+  position: absolute; z-index: 5; display: flex; flex-direction: column; min-width: 130px; padding: 4px;
+  background: #101010; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.ctx button { padding: 7px 10px; text-align: left; color: #f2f2f2; font: inherit; background: none; border: none; border-radius: 7px; cursor: pointer; }
+.ctx button:hover { background: rgba(255, 255, 255, 0.08); }
+.ctx button.danger { color: #ff8a80; }
+.inspector { width: 220px; display: flex; flex-direction: column; gap: 10px; max-height: calc(100% - 32px); overflow-y: auto; }
+.inspector h4, .inspector p { margin: 0; }
+.inspector input[type="number"] { width: 100%; box-sizing: border-box; }
