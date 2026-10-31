@@ -238,7 +238,6 @@ const gen = ({ parts, wires }) =>
     }
     const tail = (c.text ? ' ' + JSON.stringify(c.text) : '')
       + (c.bits != null || c.n != null ? ` #${c.bits ?? ''}${c.n != null ? ':' + c.n : ''}` : '')
-      + ` @${c.x},${c.y}`
     if (d.toggle) return `${kw} ${c.id} = ${c.v || 0}${tail}`
     if (c.type === 'OUT') return `out ${c.id} = ${src(0)}${tail}`
     return `${kw} ${c.id}(${INS(c).map((_, i) => src(i)).join(', ')})${tail}`
@@ -247,7 +246,7 @@ const gen = ({ parts, wires }) =>
 /* ================= code -> circuit ================= */
 const SRC = /^(\w+)(?:\.(\d+))?$/
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
-const parse = (text) => {
+const parse = (text, prev = {}) => {
   const parts = [], wires = [], errs = [], refs = []
   const add = (p, n) => {
     if (parts.some((x) => x.id === p.id)) errs.push(`Line ${n}: name "${p.id}" is used twice`)
@@ -293,8 +292,7 @@ const parse = (text) => {
     if (!s || fp >= OUTS(s).length) errs.push(`Line ${n}: "${src}" is not an output of any part`)
     else wires.push({ from: s.id, fp, to, pin })
   })
-  // parts written without @x,y get placed in columns by logic depth
-  const lvl = {}
+    const lvl = {}
   const depth = (id, seen = new Set()) => {
     if (lvl[id] != null) return lvl[id]
     const p = parts.find((x) => x.id === id)
@@ -302,13 +300,21 @@ const parse = (text) => {
     const s = new Set(seen).add(id)
     return (lvl[id] = 1 + Math.max(0, ...wires.filter((w) => w.to === id).map((w) => depth(w.from, s))))
   }
-  const rows = {}
+  // no coordinates in the code: a part keeps its old spot (same name and type), new parts are placed by logic depth
+  parts.forEach((p) => {
+    const o = prev[p.id]
+    if (p.x == null && o && o.type === p.type) { p.x = o.x; p.y = o.y }
+  })
+  const clash = (p) => parts.some((q) => {
+    if (q === p || q.x == null) return false
+    const [pw, ph] = dims(p), [qw, qh] = dims(q)
+    return p.x < q.x + qw + 40 && p.x + pw + 40 > q.x && p.y < q.y + qh + 30 && p.y + ph + 30 > q.y
+  })
   parts.forEach((p) => {
     if (p.x != null) return
-    const l = depth(p.id)
-    rows[l] = rows[l] || 0
-    p.x = 60 + l * 160
-    p.y = 60 + rows[l]++ * 100
+    p.x = 60 + depth(p.id) * 140
+    p.y = 60
+    while (clash(p)) p.y += 20
   })
   return { parts, wires, errs }
 }
@@ -339,7 +345,7 @@ function CodeEditor({ code, onChange, err }) {
         placeholder={'in A = 1\nin B = 0\nand g1(A, B)\nout Y = g1'}
       />
       <div className={`codebar${err ? ' err' : ''}`}>
-        {err || 'Synced · in A = 1  ·  and g(A, B)  ·  out Y = g  ·  _ = empty pin  ·  @x,y optional'}
+        {err || 'Synced · in A = 1  ·  and g(A, B)  ·  out Y = g  ·  _ = empty pin  ·  no positions, layout is automatic'}
       </div>
     </div>
   )
@@ -347,7 +353,7 @@ function CodeEditor({ code, onChange, err }) {
 
 /* ================= Editor tab ================= */
 const HINTS = {
-  poke: 'Poke: click an input or clock, hold a button, drag a joystick, click a keyboard then type',
+  poke: 'Poke: click inputs and clocks, drag empty space to pan, wheel to zoom',
   select: 'Edit: drag parts, Delete removes the selection',
   box: 'Select: drag a box around parts, then move them together or press Delete',
   wire: 'Wire: click an output pin, then an input pin',
@@ -390,12 +396,14 @@ const body = (c, d, w, h, ins, v) => {
   return <text x={w / 2} y={h / 2 + 5} textAnchor="middle">{t}</text>
 }
 
-function Circuit({ circuit, update, tool, setTool }) {
+function Circuit({ circuit, update, tool, setTool, fitKey }) {
   const { parts, wires } = circuit
   const [sels, setSels] = useState([])
   const [pending, setPending] = useState(null)
   const [band, setBand] = useState(null)
   const [menu, setMenu] = useState(null)
+  const [view, setView] = useState({ x: 0, y: 0, k: 1 })
+  const pan = useRef(null)
   const drag = useRef(null)
   const held = useRef(null)
   const svg = useRef(null)
@@ -405,9 +413,34 @@ function Circuit({ circuit, update, tool, setTool }) {
   const cur = sels.length === 1 ? byId[sels[0]] : null
   const cd = cur && DEFS[cur.type]
 
-  const point = (e) => {
+  const raw = (e) => {
     const r = svg.current.getBoundingClientRect()
     return [e.clientX - r.left, e.clientY - r.top]
+  }
+  const point = (e) => { const [x, y] = raw(e); return [(x - view.x) / view.k, (y - view.y) / view.k] } // screen -> circuit coordinates
+  const fit = () => {
+    const r = svg.current.getBoundingClientRect()
+    if (!r.width) return
+    if (!parts.length) return setView({ x: 0, y: 0, k: 1 })
+    const x0 = Math.min(...parts.map((p) => p.x)), y0 = Math.min(...parts.map((p) => p.y - 20))
+    const x1 = Math.max(...parts.map((p) => p.x + dims(p)[0] + 10)), y1 = Math.max(...parts.map((p) => p.y + dims(p)[1]))
+    const k = clamp(Math.min((r.width - 40) / (x1 - x0), (r.height - 40) / (y1 - y0)), 0.25, 1)
+    setView({ x: 20 - x0 * k, y: 20 - y0 * k, k })
+  }
+  useEffect(() => { fit() }, [fitKey])
+  const [running, setRunning] = useState(false)
+  const [hz, setHz] = useState(2)
+  const upd = useRef(update)
+  upd.current = update // the timer always calls the newest update
+  const hasClk = parts.some((p) => p.type === 'CLK')
+  useEffect(() => {
+    if (!running) return
+    const id = setInterval(() => upd.current((c) => ({ ...c, parts: c.parts.map((p) => (p.type === 'CLK' ? { ...p, v: p.v ? 0 : 1 } : p)) })), 500 / hz)
+    return () => clearInterval(id)
+  }, [running, hz])
+  const onWheel = (e) => {
+    const [mx, my] = raw(e), k2 = clamp(view.k * (e.deltaY < 0 ? 1.1 : 1 / 1.1), 0.2, 2.5)
+    setView({ k: k2, x: mx - (mx - view.x) * (k2 / view.k), y: my - (my - view.y) * (k2 / view.k) })
   }
   const patch = (id, o) => update((c) => ({ ...c, parts: c.parts.map((p) => (p.id === id ? { ...p, ...o } : p)) }))
   const removeMany = (ids) => {
@@ -464,13 +497,14 @@ function Circuit({ circuit, update, tool, setTool }) {
     }
     setSels([])
     if (tool === 'box') setBand({ x0: x, y0: y, x1: x, y1: y })
+    if (tool === 'poke' || tool === 'select') { const [rx, ry] = raw(e); pan.current = { sx: rx, sy: ry, vx: view.x, vy: view.y } }
   }
   const onPartDown = (e, c) => {
     e.stopPropagation()
     setMenu(null)
     const d = DEFS[c.type], [x, y] = point(e)
     if (tool === 'erase') return removeMany([c.id])
-    if (tool === 'menu') return setMenu({ id: c.id, x, y })
+    if (tool === 'menu') { const [rx, ry] = raw(e); return setMenu({ id: c.id, x: rx, y: ry }) }
     if (tool === 'poke') {
       if (d.toggle) return patch(c.id, { v: W(c) > 1 ? ((c.v || 0) + 1) & mk(W(c)) : c.v ? 0 : 1 })
       if (c.type === 'BTN') { held.current = { id: c.id }; return patch(c.id, { v: 1 }) }
@@ -483,6 +517,10 @@ function Circuit({ circuit, update, tool, setTool }) {
     }
   }
   const onMove = (e) => {
+    if (pan.current) {
+      const [rx, ry] = raw(e), a = pan.current
+      return setView((v) => ({ ...v, x: a.vx + rx - a.sx, y: a.vy + ry - a.sy }))
+    }
     const [x, y] = point(e)
     if (held.current?.joy) return joy(e, byId[held.current.id])
     if (band) return setBand({ ...band, x1: x, y1: y })
@@ -500,6 +538,7 @@ function Circuit({ circuit, update, tool, setTool }) {
       setBand(null)
     }
     drag.current = null
+    pan.current = null
     const h = held.current
     if (h) { patch(h.id, h.joy ? { vx: undefined, vy: undefined } : { v: 0 }); held.current = null }
   }
@@ -519,13 +558,14 @@ function Circuit({ circuit, update, tool, setTool }) {
 
   return (
     <div className={`circuit tool-${tool}`}>
-      <svg ref={svg} onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={release}>
+      <svg ref={svg} onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={release} onWheel={onWheel}>
         <defs>
           <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.14)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#dots)" />
+        <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
 
         {wires.map((w, i) => {
           const a = byId[w.from], b = byId[w.to]
@@ -571,8 +611,17 @@ function Circuit({ circuit, update, tool, setTool }) {
           <rect className="band" x={Math.min(band.x0, band.x1)} y={Math.min(band.y0, band.y1)}
             width={Math.abs(band.x1 - band.x0)} height={Math.abs(band.y1 - band.y0)} />
         )}
+        </g>
       </svg>
 
+      <div className="runbar">
+        <button type="button" className={running ? 'on' : ''} disabled={!hasClk} title={hasClk ? '' : 'Add a clock part first'}
+          onClick={() => setRunning(!running)}>{running ? 'Pause' : 'Run'}</button>
+        <select value={hz} onChange={(e) => setHz(+e.target.value)} aria-label="Clock speed">
+          {[1, 2, 5, 10, 20].map((h) => <option key={h} value={h}>{h} Hz</option>)}
+        </select>
+        <button type="button" onClick={fit}>Fit view</button>
+      </div>
       <div className="hint">{HINTS[tool] || `Click the canvas to place ${tool}`}</div>
 
       {menu && byId[menu.id] && (
@@ -739,6 +788,8 @@ function Projects({ code, onOpen }) {
 }
 
 const EXAMPLES = [
+  { name: 'Mini CPU', note: '4-bit accumulator CPU with a program in ROM. Press Run to start its clock.',
+    code: ["// ===== Mini CPU: 4-bit accumulator machine. Press Run: each clock cycle runs one instruction =====", "clk ck = 0", "", "// --- program counter: register + incrementer + jump mux ---", "reg pc(npc, ck) #4", "const one() #4", "gnd z()", "gnd zero4() #4", "add inc(pc, one, z) #4", "mux npc(inc, imm, take) #4", "", "// --- program memory: one ROM for opcodes, one for operands (hex words, address = pc) ---", "rom opm(pc) \"1 7 7 7 7 1 3 9 2 6 8 0 0 0 0 0\" #4:4", "rom imm(pc) \"1 0 0 0 0 5 1 6 3 5 0 0 0 0 0 0\" #4:4", "split sp(opm) #4", "", "// --- ALU: every operation is computed, the opcode bits pick one ---", "const sh1() #2", "shift shl(acc, sh1) \"ll\" #4", "add sum(acc, imm, z) #4", "sub dif(acc, imm, z) #4", "and aa(acc, imm) #4", "or oo(acc, imm) #4", "xor xx(acc, imm) #4", "mux m0(acc, imm, sp) #4", "mux m1(sum, dif, sp) #4", "mux m2(aa, oo, sp) #4", "mux m3(xx, shl, sp) #4", "mux n0(m0, m1, sp.1) #4", "mux n1(m2, m3, sp.1) #4", "mux alu(n0, n1, sp.2) #4", "mux nacc(alu, acc, sp.3) #4", "reg acc(nacc, ck) #4", "", "// --- jump unit: opcode 8 = JMP, opcode 9 = JNZ (jump if acc is not 0) ---", "cmp zc(acc, zero4) #4", "not nz(zc.1)", "not no0(sp)", "and jnzt(sp, nz)", "or sel(no0, jnzt)", "and take(sp.3, sel)", "", "// --- displays ---", "out ACC = acc #4", "hex dacc(acc)", "out PC = pc #4", "hex dpc(pc)"].join('\n') },
   { name: '4-bit adder', note: 'Buses: change the bit width of any part in the panel.',
     code: ['in A = 5 #4', 'in B = 3 #4', 'in Ci = 0', 'add s(A, B, Ci) #4', 'out Sum = s #4', 'out Cout = s.1'].join('\n') },
   { name: 'RAM write and read', note: 'Set WE to 1, poke the clock to store D at address A.',
@@ -766,7 +817,7 @@ const DOCS = [
   'out Y = a.1         output fed by that pin',
   'split s(A) #4       bus to bits s, s.1, s.2 ...   merge m(a,b,c,d)',
   '_                   leave a pin empty',
-  '@x,y                optional position (the editor adds it)',
+  '(no positions)      layout is automatic, drag parts freely',
   '// text             comment',
 ].join('\n')
 
@@ -793,6 +844,7 @@ export default function Dashboard() {
   const [circuit, setCircuit] = useState(START)
   const [code, setCode] = useState(() => gen(START))
   const [err, setErr] = useState('')
+  const [fitKey, setFitKey] = useState(0)
   const close = () => setModal(null)
 
   // editor -> code: every canvas change rewrites the text
@@ -803,14 +855,14 @@ export default function Dashboard() {
     setErr('')
   }
   // code -> editor: valid text rebuilds the canvas, invalid text keeps the last good circuit
-  const onCode = (text) => {
+  const onCode = (text, reset) => {
     setCode(text)
-    const r = parse(text)
+    const r = parse(text, reset ? {} : Object.fromEntries(circuit.parts.map((p) => [p.id, p])))
     if (r.errs.length) return setErr(r.errs[0])
     setErr('')
     setCircuit(settle({ parts: r.parts, wires: r.wires }))
   }
-  const load = (text) => { onCode(text); close(); setTab('Editor') }
+  const load = (text) => { onCode(text, true); close(); setTab('Editor'); setFitKey((k) => k + 1) }
 
   const exportCode = () => {
     const a = document.createElement('a')
@@ -870,7 +922,7 @@ export default function Dashboard() {
           <CodeEditor code={code} onChange={onCode} err={err} />
         </div>
         <div style={{ display: tab === 'Editor' ? 'contents' : 'none' }}>
-          <Circuit circuit={circuit} update={update} tool={tool} setTool={setTool} />
+          <Circuit circuit={circuit} update={update} tool={tool} setTool={setTool} fitKey={fitKey} />
         </div>
       </main>
 
