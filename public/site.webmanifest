@@ -1,0 +1,13 @@
+{
+  "name": "Stutr",
+  "short_name": "Stutr",
+  "description": "A code-based Logisim alternative.",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#141414",
+  "theme_color": "#141414",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

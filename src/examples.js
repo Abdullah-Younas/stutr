@@ -1,0 +1,21 @@
+// Ready-made circuits shown in the Repository panel.
+export const EXAMPLES = [
+  { name: "Mini CPU", note: "4-bit accumulator CPU with a program in ROM. Press Run to start its clock.",
+    code: ["# ===== Mini CPU: 4-bit accumulator machine. Press Run: each clock cycle runs one instruction =====", "ck = clock()", "", "# program counter: register + incrementer + jump mux", "pc   = register<4>(npc, ck)", "one  = constant<4>(1)", "inc  = add<4>(pc, one)", "npc  = mux<4>(inc, imm, take)", "", "# program memory: opcodes and operands, address = pc", "opm  = rom<4>(pc, addr=4, data=\"1 7 7 7 7 1 3 9 2 6 8 0 0 0 0 0\")", "imm  = rom<4>(pc, addr=4, data=\"1 0 0 0 0 5 1 6 3 5 0 0 0 0 0 0\")", "op   = split<4>(opm)", "", "# ALU: every operation is computed, the opcode bits pick one", "sh1  = constant<2>(1)", "shl  = shift<4>(acc, sh1, mode=\"ll\")", "sum  = add<4>(acc, imm)", "dif  = sub<4>(acc, imm)", "aa   = and<4>(acc, imm)", "oo   = or<4>(acc, imm)", "xx   = xor<4>(acc, imm)", "m0   = mux<4>(acc, imm, op[0])", "m1   = mux<4>(sum, dif, op[0])", "m2   = mux<4>(aa, oo, op[0])", "m3   = mux<4>(xx, shl, op[0])", "n0   = mux<4>(m0, m1, op[1])", "n1   = mux<4>(m2, m3, op[1])", "alu  = mux<4>(n0, n1, op[2])", "nacc = mux<4>(alu, acc, op[3])", "acc  = register<4>(nacc, ck)", "", "# jump unit: opcode 8 = JMP, 9 = JNZ (jump if acc is not 0)", "zero = ground<4>()", "zc   = cmp<4>(acc, zero)", "nz   = not(zc.eq)", "no0  = not(op[0])", "jnz  = and(op[0], nz)", "sel  = or(no0, jnz)", "take = and(op[3], sel)", "", "# displays", "ACC  = output<4>(acc)", "hexa = hex(acc)", "PC   = output<4>(pc)", "hexp = hex(pc)"].join('\n') },
+  { name: "4-bit adder", note: "Buses: change the bit width of any part in the panel.",
+    code: ["A = input<4>(5)", "B = input<4>(3)", "s = add<4>(A, B)", "Sum = output<4>(s.sum)", "Carry = output(s.carry)"].join('\n') },
+  { name: "RAM write and read", note: "Set WE to 1, press Run or poke the clock to store D at address A.",
+    code: ["A = input<3>(2)", "D = input<4>(9)", "WE = input(1)", "ck = clock()", "r = ram<4>(A, D, WE, ck, addr=3)", "Q = output<4>(r)"].join('\n') },
+  { name: "Clock divider", note: "The flip-flop toggles on every rising edge.",
+    code: ["ck = clock()", "f = dff(f.nq, ck)", "Q = output(f)"].join('\n') },
+  { name: "2-bit counter", note: "Counts 0 to 3 while the clock runs.",
+    code: ["ck = clock()", "c = counter<2>(ck)", "Q = output<2>(c)"].join('\n') },
+  { name: "Half adder", note: "Adds two bits: XOR is the sum, AND is the carry.",
+    code: ["A = input(1)", "B = input(1)", "s = xor(A, B)", "c = and(A, B)", "Sum = output(s)", "Carry = output(c)"].join('\n') },
+  { name: "Full adder", note: "Adds two bits plus a carry-in.",
+    code: ["A = input(1)", "B = input(0)", "Cin = input(1)", "x = xor(A, B)", "s = xor(x, Cin)", "a1 = and(A, B)", "a2 = and(x, Cin)", "co = or(a1, a2)", "Sum = output(s)", "Cout = output(co)"].join('\n') },
+  { name: "XOR from NANDs", note: "Four NAND gates behave like one XOR.",
+    code: ["A = input(1)", "B = input(0)", "n1 = nand(A, B)", "n2 = nand(A, n1)", "n3 = nand(B, n1)", "n4 = nand(n2, n3)", "Y = output(n4)"].join('\n') },
+  { name: "Majority vote", note: "Output is 1 when at least two inputs are 1.",
+    code: ["A = input(1)", "B = input(1)", "C = input(0)", "ab = and(A, B)", "bc = and(B, C)", "ac = and(A, C)", "t = or(ab, bc)", "m = or(t, ac)", "Y = output(m)"].join('\n') },
+]
