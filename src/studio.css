@@ -1,0 +1,147 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
+/* Editor chrome: flat, dense, one accent. Loaded after dashboard.css so it wins. */
+.DashBG {
+  --s0: #060a14; --s1: #0a1020; --s2: #0d1428; --s3: #121b36; --ln: #1c2745;
+  --tx: #e6ecff; --tx2: #9aa8cf; --tx3: #66759f; --ac: #4f7cff; --live: #3be0ff; --sel: #ffb454;
+  width: 100%; height: 100vh; height: 100dvh; background: var(--s0); color: var(--tx);
+  font: 13px/1.45 "IBM Plex Sans", system-ui, sans-serif;
+}
+.DashBG * { scrollbar-width: thin; scrollbar-color: #27345f transparent; }
+.DashBG kbd { padding: 0 5px; color: var(--tx3); font: 500 11px "IBM Plex Mono", monospace; background: var(--s2); border: 1px solid var(--ln); border-radius: 4px; }
+
+/* ---------- sidebar ---------- */
+.DashBG .Tree { --text: var(--tx); --muted: var(--tx3); --line: var(--ln); width: 236px; min-width: 236px; padding: 0; background: var(--s1); border: 0; border-right: 1px solid var(--ln); border-radius: 0; }
+.DashBG .brand { flex-shrink: 0; height: 40px; margin: 0; padding: 0 14px; gap: 10px; border-bottom: 1px solid var(--ln); }
+.DashBG .brand-logo { width: 22px; height: 22px; border-radius: 5px; background: var(--ac); color: #fff; font-size: 12px; }
+.DashBG .brand-name { font: 600 14px "IBM Plex Mono", monospace; }
+.DashBG .search { gap: 8px; height: 30px; margin: 10px 10px 4px; padding: 0 10px; color: var(--tx3); background: var(--s2); border: 1px solid var(--ln); border-radius: 6px; }
+.DashBG .search svg { width: 14px; height: 14px; }
+.DashBG .search input { font-size: 13px; color: var(--tx); }
+.DashBG .search:focus-within { border-color: var(--ac); }
+.DashBG .group { gap: 1px; margin: 0; padding: 10px 8px 4px; border: 0; }
+.DashBG .group-label { margin: 0; padding: 0 8px 4px; font-size: 11px; font-weight: 500; letter-spacing: 0; color: var(--tx3); }
+.DashBG .Tree .nav-item { gap: 10px; height: 30px; padding: 0 8px; font-size: 13px; color: var(--tx2); background: transparent; border: 0; border-radius: 5px; }
+.DashBG .Tree .nav-item svg { width: 16px; height: 16px; color: var(--tx3); }
+.DashBG .Tree .nav-item:hover { color: var(--tx); background: var(--s3); }
+.DashBG .Tree .nav-item:hover svg { color: var(--tx2); }
+.DashBG .Tree .nav-item.active { color: #fff; background: #15224a; box-shadow: inset 2px 0 0 var(--ac); }
+.DashBG .Tree .nav-item.active svg { color: var(--live); }
+.DashBG .Tree .nav-item:disabled:hover { background: transparent; color: var(--tx2); }
+.DashBG .Tree .badge { padding: 1px 6px; font: 500 11px "IBM Plex Mono", monospace; text-transform: none; color: var(--tx3); background: var(--s3); border: 0; border-radius: 4px; }
+.DashBG .account { gap: 10px; padding: 10px 14px; font-size: 12px; color: var(--tx2); border-top: 1px solid var(--ln); }
+.DashBG .avatar { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; font-size: 11px; font-weight: 600; color: var(--tx); background: var(--s3); border: 1px solid var(--ln); border-radius: 50%; }
+.DashBG .account .who { flex: 1; min-width: 0; }
+.DashBG .account a, .DashBG .account button { color: var(--tx2); text-decoration: none; }
+.DashBG .account a:hover, .DashBG .account button:hover { color: var(--tx); text-decoration: underline; }
+
+/* ---------- top bar and tabs ---------- */
+.DashBG .Main { padding: 0; background: var(--s0); border: 0; border-radius: 0; }
+.DashBG .topbar { flex-shrink: 0; gap: 0; height: 40px; padding-right: 14px; background: var(--s2); border-bottom: 1px solid var(--ln); }
+.DashBG .SelectionBar { gap: 0; height: 40px; padding: 0; background: none; border: 0; border-radius: 0; }
+.DashBG .SelectionBar button { height: 40px; padding: 0 18px; font-size: 13px; color: var(--tx3); background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; }
+.DashBG .SelectionBar button:hover { color: var(--tx); }
+.DashBG .SelectionBar button.active { color: #fff; background: none; border-bottom-color: var(--ac); }
+.DashBG .stat { margin-left: 12px; font: 500 11px "IBM Plex Mono", monospace; color: var(--tx3); }
+.DashBG .burger { width: 40px; height: 40px; color: var(--tx2); background: none; border: 0; border-right: 1px solid var(--ln); border-radius: 0; }
+
+/* ---------- canvas, docked panels ---------- */
+.DashBG .circuit { margin: 0; background: var(--s0); border: 0; border-radius: 0; }
+/* An SVG is a replaced element: it needs an explicit size, insets alone leave it at 300x150. */
+.DashBG .circuit svg { top: 40px; left: 112px; right: auto; bottom: auto; width: calc(100% - 112px); height: calc(100% - 64px); }
+.DashBG .CodeEditor { margin: 0; background: var(--s0); border: 0; border-radius: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; }
+.DashBG .CodeEditor textarea { caret-color: var(--live); }
+.DashBG .CodeEditor .gutter { color: #4a5a8c; border-right-color: var(--ln); }
+.DashBG .codebar { left: 0; right: 0; bottom: 0; padding: 0 14px; font: 11px/24px "IBM Plex Mono", monospace; color: var(--tx3); background: var(--s2); border: 0; border-top: 1px solid var(--ln); border-radius: 0; }
+.DashBG .codebar.err { color: #ff8a80; border-top-color: rgba(255, 138, 128, 0.5); }
+
+.DashBG .runbar { left: 0; right: 0; top: 0; align-items: center; gap: 4px; max-width: none; height: 40px; padding: 0 10px; overflow-x: auto; flex-wrap: nowrap; background: var(--s2); border-bottom: 1px solid var(--ln); }
+.DashBG .runbar button, .DashBG .runbar select { height: 28px; padding: 0 10px; font-size: 13px; white-space: nowrap; color: var(--tx2); background: transparent; border: 1px solid transparent; border-radius: 6px; }
+.DashBG .runbar button:hover:not(:disabled) { color: var(--tx); background: var(--s3); }
+.DashBG .runbar select { background: var(--s1); border-color: var(--ln); }
+.DashBG .runbar button:first-child { margin-right: 6px; font-weight: 500; color: #fff; background: var(--ac); }
+.DashBG .runbar button:first-child:hover:not(:disabled) { background: #6a90ff; }
+.DashBG .runbar button:first-child.on { color: var(--live); background: transparent; border-color: var(--live); }
+.DashBG .runbar button:first-child:disabled { color: var(--tx3); background: var(--s3); }
+.DashBG .runbar button:disabled { opacity: 0.4; }
+
+.DashBG .toolbar { left: 0; top: 40px; bottom: 24px; flex-direction: column; flex-wrap: nowrap; align-content: flex-start; gap: 2px; width: 112px; max-width: none; padding: 8px; overflow-y: auto; background: var(--s1); border-right: 1px solid var(--ln); }
+.DashBG .toolbar button { justify-content: space-between; width: 100%; height: 30px; padding: 0 8px; font-size: 13px; color: var(--tx2); background: transparent; border: 0; border-radius: 5px; }
+.DashBG .toolbar button:hover { color: var(--tx); background: var(--s3); }
+.DashBG .toolbar button.on { color: #fff; background: #15224a; box-shadow: inset 2px 0 0 var(--ac); }
+
+.DashBG .hint { left: 0; right: 0; bottom: 0; display: block; height: 24px; padding: 0 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 11px/23px "IBM Plex Mono", monospace; color: var(--tx3); background: var(--s2); border: 0; border-top: 1px solid var(--ln); border-radius: 0; }
+
+.DashBG .inspector { top: 40px; right: 0; bottom: 24px; gap: 12px; width: 240px; max-height: none; padding: 14px; font-size: 13px; background: var(--s1); border: 0; border-left: 1px solid var(--ln); border-radius: 0; }
+.DashBG .inspector h4 { font: 600 13px "IBM Plex Mono", monospace; color: var(--tx); }
+.DashBG .inspector label, .DashBG .inspector p { color: var(--tx3); }
+.DashBG .inspector input { height: 28px; background: var(--s2); border: 1px solid var(--ln); border-radius: 6px; }
+.DashBG .inspector input:focus { border-color: var(--ac); }
+.DashBG .inspector button { height: 28px; padding: 0; border-radius: 6px; }
+.DashBG .ctx { padding: 3px; background: var(--s1); border: 1px solid var(--ln); border-radius: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); }
+.DashBG .ctx button { border-radius: 5px; }
+.DashBG .ctx button:hover { background: var(--s3); }
+
+/* ---------- dialogs ---------- */
+.DashBG .overlay { background: rgba(3, 6, 14, 0.72); backdrop-filter: none; }
+.DashBG .modal { background: var(--s1); border: 1px solid var(--ln); border-radius: 10px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55); }
+.DashBG .modal header { padding: 12px 12px 12px 18px; border-bottom: 1px solid var(--ln); }
+.DashBG .modal h3 { font-size: 14px; font-weight: 600; }
+.DashBG .modal h4 { font-size: 12px; font-weight: 500; color: var(--tx3); }
+.DashBG .modal .x { border-radius: 6px; }
+.DashBG .modal .x:hover { background: var(--s3); }
+.DashBG .modal-search, .DashBG .field select { height: 34px; padding: 0 12px; font-size: 13px; background: var(--s2); border: 1px solid var(--ln); border-radius: 6px; }
+.DashBG .modal-search:focus { border-color: var(--ac); }
+.DashBG .tile { background: var(--s2); border: 1px solid var(--ln); border-radius: 8px; }
+.DashBG .tile:hover { background: var(--s3); }
+.DashBG .tile.active { border-color: var(--ac); }
+.DashBG .tile.soon:hover { background: var(--s2); }
+.DashBG .btn { height: 32px; padding: 0 12px; font-size: 13px; color: var(--tx); background: var(--s2); border: 1px solid var(--ln); border-radius: 6px; }
+.DashBG .btn:hover { background: var(--s3); }
+.DashBG .btn[type="submit"] { color: #fff; background: var(--ac); border-color: var(--ac); }
+.DashBG .btn.ghost { color: #ff8a80; background: transparent; border-color: rgba(255, 138, 128, 0.35); }
+.DashBG .item { background: var(--s2); border: 1px solid var(--ln); border-radius: 8px; }
+.DashBG .docs { font: 12px/1.7 "IBM Plex Mono", monospace; background: var(--s0); border: 1px solid var(--ln); border-radius: 8px; }
+.DashBG .field { border-bottom-color: var(--ln); }
+.DashBG .toast { bottom: 36px; background: var(--s1); border: 1px solid var(--ln); border-radius: 8px; }
+
+/* ---------- phones and tablets ---------- */
+@media (max-width: 800px) {
+  .DashBG .Tree { width: min(300px, 86vw); min-width: 0; }
+  .DashBG .Main { padding: 0; }
+  .DashBG .toolbar { top: 40px; left: 0; right: 0; bottom: auto; flex-direction: row; width: auto; height: 40px; padding: 5px 8px; overflow: auto hidden; border-right: 0; border-bottom: 1px solid var(--ln); }
+  .DashBG .toolbar button { flex-shrink: 0; gap: 8px; width: auto; }
+  .DashBG .circuit svg { top: 80px; left: 0; width: 100%; height: calc(100% - 104px); }
+  .DashBG .inspector { top: auto; right: 0; bottom: 24px; left: 0; width: auto; max-height: 45%; border-left: 0; border-top: 1px solid var(--ln); }
+}
+
+/* ---------- dockable workspace ---------- */
+.DashBG .workspace { position: relative; display: flex; flex: 1; min-height: 0; }
+.DashBG .workspace.col { flex-direction: column; }
+.DashBG .pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; container: pane / inline-size; }
+.DashBG .workspace.dragging .pane { pointer-events: none; }
+.DashBG .split-handle { flex: none; z-index: 3; background: var(--ln); transition: background 0.15s; }
+.DashBG .workspace.row .split-handle { width: 5px; cursor: col-resize; }
+.DashBG .workspace.col .split-handle { height: 5px; cursor: row-resize; }
+.DashBG .split-handle:hover, .DashBG .split-handle:focus-visible { background: var(--ac); outline: none; }
+.DashBG .drop-preview { position: absolute; z-index: 20; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; background: rgba(79, 124, 255, 0.16); border: 2px solid var(--ac); transition: all 0.12s ease; }
+.DashBG .drop-preview.tabs { opacity: 1; background: rgba(79, 124, 255, 0.07); }
+.DashBG .drop-preview.left { opacity: 1; width: 50%; }
+.DashBG .drop-preview.right { opacity: 1; left: 50%; width: 50%; }
+.DashBG .drop-preview.top { opacity: 1; height: 50%; }
+.DashBG .drop-preview.bottom { opacity: 1; top: 50%; height: 50%; }
+.DashBG .SelectionBar button[draggable="true"] { cursor: grab; }
+.DashBG .SelectionBar button[draggable="true"]:active { cursor: grabbing; }
+.DashBG .layout-btns { display: flex; gap: 2px; margin-left: auto; padding: 2px; background: var(--s1); border: 1px solid var(--ln); border-radius: 6px; }
+.DashBG .layout-btns button { display: grid; place-items: center; width: 28px; height: 24px; color: var(--tx3); background: none; border: 0; border-radius: 4px; cursor: pointer; }
+.DashBG .layout-btns button:hover { color: var(--tx); }
+.DashBG .layout-btns button[aria-pressed="true"] { color: #fff; background: var(--s3); }
+@media (max-width: 800px) { .DashBG .layout-btns { display: none; } .DashBG .stat { margin-left: auto; } }
+
+/* A narrow panel (half the screen, a phone) gets the compact canvas layout. */
+@container pane (max-width: 560px) {
+  .DashBG .toolbar { top: 40px; left: 0; right: 0; bottom: auto; flex-direction: row; width: auto; height: 40px; padding: 5px 8px; overflow: auto hidden; border-right: 0; border-bottom: 1px solid var(--ln); }
+  .DashBG .toolbar button { flex-shrink: 0; gap: 8px; width: auto; }
+  .DashBG .circuit svg { top: 80px; left: 0; width: 100%; height: calc(100% - 104px); }
+  .DashBG .inspector { top: auto; right: 0; bottom: 24px; left: 0; width: auto; max-height: 45%; border-left: 0; border-top: 1px solid var(--ln); }
+}

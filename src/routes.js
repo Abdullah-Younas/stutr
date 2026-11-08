@@ -8,12 +8,16 @@ export const ROUTES = [
     description: 'What data Stutr collects, why, where it is stored and how you can export or delete it.' },
   { path: '/terms', title: 'Terms of Service - Stutr', index: true,
     description: 'The terms for using Stutr, the code-based circuit simulator.' },
+  { path: '/start', title: 'Get started - Stutr', index: false,
+    description: 'Open the Stutr editor and start building a digital circuit from code.' },
+  { path: '/pricing', title: 'Pricing - Stutr', index: false,
+    description: 'Stutr pricing is coming soon. Plans and details will be posted here.' }, // set index: true when pricing is final
   { path: '/login', title: 'Sign in - Stutr', index: false,
     description: 'Sign in to Stutr with GitHub or Google to save your circuits.' },
   { path: '/app', title: 'Editor - Stutr', index: false,
     description: 'Build and simulate digital logic circuits.' },
 ]
-export const FOOTER_LINKS = [['FAQ', '/faq'], ['Privacy', '/privacy'], ['Terms', '/terms']]
+export const FOOTER_LINKS = [['FAQ', '/faq'], ['Pricing', '/pricing'], ['Privacy', '/privacy'], ['Terms', '/terms']]
 
 const trim = (u) => u.replace(/\/$/, '')
 export const sitemapXml = (base, date = new Date().toISOString().slice(0, 10)) =>

@@ -137,10 +137,10 @@ describe('menu, projects and new circuit', () => {
     expect(q('.part').length).toBe(6)
   })
 
-  it('the Repository opens the Mini CPU', () => {
+  it('the Examples panel opens the Mini CPU', () => {
     mount()
-    fireEvent.click(screen.getByRole('button', { name: /Repository/ }))
-    const dialog = screen.getByRole('dialog', { name: 'Repository' })
+    fireEvent.click(screen.getByRole('button', { name: /Examples/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Examples' })
     fireEvent.click(within(dialog).getAllByRole('button', { name: 'Open' })[0])
     expect(q('.part').length).toBeGreaterThan(30)
   })

@@ -1,7 +1,8 @@
 import './index.css'
 import './dashboard.css'
+import './studio.css'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, Download, Eraser, FilePlus, Folder, GitBranch, Hand, Menu, MousePointer2, Search, Settings as Cog, Wrench, X } from 'lucide-react'
+import { BookOpen, Cpu, Download, Eraser, FilePlus, Folder, Hand, LayoutGrid, Library, Lightbulb, Menu, MousePointer2, Search, Settings as Cog, Wrench, X } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './lib/auth'
 import { makeStore } from './lib/store'
@@ -699,13 +700,19 @@ function SettingsModal({ settings, setSettings, user, store, onNote, onSignOut }
 
 /* ================= Dashboard ================= */
 const NAV = [
-  { label: 'Build', items: [
-    { id: 'tools', name: 'Parts & tools', icon: Wrench },
+  { label: 'My work', items: [
+    { id: 'projects', name: 'Projects', icon: Folder },
     { id: 'create', name: 'Create', icon: FilePlus },
   ] },
-  { label: 'Library', items: [
-    { id: 'projects', name: 'Projects', icon: Folder },
-    { id: 'repo', name: 'Repository', icon: GitBranch },
+  { label: 'Build', items: [
+    { id: 'tools', name: 'Parts & tools', icon: Wrench },
+    { id: 'examples', name: 'Examples', icon: Library },
+  ] },
+  // Hardware lab: placeholders for the Arduino / breadboard work that is coming later.
+  { label: 'Hardware lab', items: [
+    { id: 'arduino', name: 'Arduino boards', icon: Cpu, soon: true },
+    { id: 'breadboard', name: 'Breadboards', icon: LayoutGrid, soon: true },
+    { id: 'hw-parts', name: 'LEDs & jumper wires', icon: Lightbulb, soon: true },
   ] },
   { label: 'Circuit', items: [{ id: 'export', name: 'Export code', icon: Download }] },
   { label: 'Support', items: [
@@ -714,6 +721,22 @@ const NAV = [
   ] },
 ]
 const tabs = ['Code', 'Editor']
+const LAYOUT_KEY = 'stutr-layout'
+const other = (t) => (t === 'Code' ? 'Editor' : 'Code')
+const readLayout = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAYOUT_KEY))
+    if (v && ['tabs', 'row', 'col'].includes(v.mode) && tabs.includes(v.first)) return { mode: v.mode, first: v.first, ratio: Math.min(0.8, Math.max(0.2, +v.ratio || 0.5)) }
+  } catch { /* ignore a missing or broken saved layout */ }
+  return { mode: 'tabs', first: 'Editor', ratio: 0.5 }
+}
+const LayoutIcon = ({ kind }) => (
+  <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <rect x="2" y="3" width="12" height="10" rx="1.5" />
+    {kind === 'row' && <path d="M8 3V13" />}
+    {kind === 'col' && <path d="M2 8H14" />}
+  </svg>
+)
 
 export default function Dashboard() {
   usePageMeta('/app')
@@ -729,6 +752,45 @@ export default function Dashboard() {
   const [code, setCode] = useState(() => gen(START))
   const [err, setErr] = useState('')
   const [fitKey, setFitKey] = useState(0)
+  const [layout, setLayout] = useState(readLayout)
+  const [drag, setDrag] = useState(null) // the tab being dragged
+  const [zone, setZone] = useState(null) // where it would land
+  const space = useRef(null)
+  const resizing = useRef(false)
+  const split = layout.mode !== 'tabs'
+  useEffect(() => { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)) } catch { /* private mode */ } }, [layout])
+  const arrange = (mode, first = layout.first) => { setLayout((l) => ({ ...l, mode, first })); setFitKey((k) => k + 1) }
+  const zoneAt = (e) => {
+    const r = space.current.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height
+    return x < 0.28 ? 'left' : x > 0.72 ? 'right' : y < 0.28 ? 'top' : y > 0.72 ? 'bottom' : 'tabs'
+  }
+  const drop = (t, z) => {
+    if (z === 'tabs') { setTab(t); return arrange('tabs') }
+    const o = other(t)
+    if (z === 'left') arrange('row', t)
+    else if (z === 'right') arrange('row', o)
+    else if (z === 'top') arrange('col', t)
+    else arrange('col', o)
+  }
+  const nudge = (v) => setLayout((l) => ({ ...l, ratio: Math.min(0.8, Math.max(0.2, v)) }))
+  const onResize = (e) => {
+    if (!resizing.current) return
+    const r = space.current.getBoundingClientRect()
+    nudge(layout.mode === 'row' ? (e.clientX - r.left) / r.width : (e.clientY - r.top) / r.height)
+  }
+  const onResizeKey = (e) => {
+    const back = e.key === 'ArrowLeft' || e.key === 'ArrowUp', fwd = e.key === 'ArrowRight' || e.key === 'ArrowDown'
+    if (back || fwd) { e.preventDefault(); nudge(layout.ratio + (fwd ? 0.03 : -0.03)) }
+  }
+  const pane = (name, node) => {
+    const first = layout.first === name
+    return (
+      <div className="pane" style={{ display: split || tab === name ? undefined : 'none', order: first ? 0 : 2, flex: split ? `${first ? layout.ratio : 1 - layout.ratio} 1 0` : '1 1 0' }}>
+        {node}
+      </div>
+    )
+  }
   const [settings, setSettings] = useState(readLocalSettings)
   const [ready, setReady] = useState(false)
   const [note, setNote] = useState('')
@@ -854,11 +916,13 @@ export default function Dashboard() {
           return (
             <nav className="group" key={s.label} aria-label={s.label}>
               <p className="group-label">{s.label}</p>
-              {items.map(({ id, name, icon: Icon }) => (
-                <button key={id} type="button" className={`nav-item${modal === id ? ' active' : ''}`} onClick={() => run(id)}>
+              {items.map(({ id, name, icon: Icon, soon }) => (
+                <button key={id} type="button" disabled={soon} title={soon ? 'Coming soon' : undefined}
+                  className={`nav-item${modal === id ? ' active' : ''}`} onClick={() => run(id)}>
                   <Icon size={20} strokeWidth={1.5} aria-hidden="true" />
                   <span>{name}</span>
                   {id === 'tools' && <em className="badge">{tool}</em>}
+                  {soon && <em className="badge">Soon</em>}
                 </button>
               ))}
             </nav>
@@ -868,6 +932,7 @@ export default function Dashboard() {
         <div className="account">
           {user ? (
             <>
+              <span className="avatar" aria-hidden="true">{String(user.user_metadata?.user_name || user.email || '?')[0].toUpperCase()}</span>
               <span className="who" title={user.email}>{user.user_metadata?.user_name || user.email}</span>
               <button type="button" onClick={async () => { await signOut(); navigate('/') }}>Sign out</button>
             </>
@@ -881,19 +946,42 @@ export default function Dashboard() {
           <button type="button" className="burger" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(!drawer)}>
             <Menu size={20} aria-hidden="true" />
           </button>
-          <div className="SelectionBar" role="tablist">
-            {tabs.map((n) => (
-              <button key={n} type="button" role="tab" aria-selected={tab === n}
-                className={tab === n ? 'active' : ''} onClick={() => setTab(n)}>{n}</button>
+          <div className="SelectionBar" role="tablist"
+            onDragOver={(e) => { if (drag) e.preventDefault() }}
+            onDrop={(e) => { e.preventDefault(); if (drag) drop(drag, 'tabs'); setDrag(null); setZone(null) }}>
+            {(split ? [layout.first, other(layout.first)] : tabs).map((n) => (
+              <button key={n} type="button" role="tab" aria-selected={split || tab === n} draggable
+                title="Click to show. Drag onto the workspace to dock it beside or above the other panel."
+                className={split || tab === n ? 'active' : ''}
+                onClick={() => { setTab(n); arrange('tabs') }}
+                onDragStart={(e) => { e.dataTransfer.setData('text/plain', n); e.dataTransfer.effectAllowed = 'move'; setDrag(n) }}
+                onDragEnd={() => { setDrag(null); setZone(null) }}>{n}</button>
             ))}
           </div>
+          <div className="layout-btns" role="group" aria-label="Panel layout">
+            <button type="button" aria-pressed={layout.mode === 'tabs'} aria-label="One panel at a time" title="One panel at a time" onClick={() => arrange('tabs')}><LayoutIcon kind="tabs" /></button>
+            <button type="button" aria-pressed={layout.mode === 'row'} aria-label="Side by side" title="Side by side" onClick={() => arrange('row')}><LayoutIcon kind="row" /></button>
+            <button type="button" aria-pressed={layout.mode === 'col'} aria-label="Stacked" title="Stacked" onClick={() => arrange('col')}><LayoutIcon kind="col" /></button>
+          </div>
+          <span className="stat">{circuit.parts.length} {circuit.parts.length === 1 ? 'part' : 'parts'}</span>
         </div>
-        <div style={{ display: tab === 'Code' ? 'contents' : 'none' }}>
-          <CodeEditor code={code} onChange={onCode} err={err} />
-        </div>
-        <div style={{ display: tab === 'Editor' ? 'contents' : 'none' }}>
-          <Circuit circuit={circuit} update={update} tool={tool} setTool={setTool} fitKey={fitKey} settings={settings}
-            mark={mark} undo={undo} redo={redo} canUndo={hv.u > 0} canRedo={hv.r > 0} />
+        <div ref={space} className={`workspace ${layout.mode}${drag ? ' dragging' : ''}`}
+          onDragOver={(e) => { if (!drag) return; e.preventDefault(); const z = zoneAt(e); if (z !== zone) setZone(z) }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setZone(null) }}
+          onDrop={(e) => { e.preventDefault(); if (drag && zone) drop(drag, zone); setDrag(null); setZone(null) }}>
+          {pane('Code', <CodeEditor code={code} onChange={onCode} err={err} />)}
+          {split && (
+            <div className="split-handle" role="separator" tabIndex={0} aria-label="Resize panels"
+              aria-orientation={layout.mode === 'row' ? 'vertical' : 'horizontal'} style={{ order: 1 }}
+              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); resizing.current = true }}
+              onPointerMove={onResize} onPointerUp={() => { resizing.current = false }} onPointerCancel={() => { resizing.current = false }}
+              onKeyDown={onResizeKey} onDoubleClick={() => nudge(0.5)} />
+          )}
+          {pane('Editor', (
+            <Circuit circuit={circuit} update={update} tool={tool} setTool={setTool} fitKey={fitKey} settings={settings}
+              mark={mark} undo={undo} redo={redo} canUndo={hv.u > 0} canRedo={hv.r > 0} />
+          ))}
+          {drag && <div className={`drop-preview ${zone || ''}`} aria-hidden="true" />}
         </div>
       </main>
 
@@ -904,8 +992,8 @@ export default function Dashboard() {
         </Modal>
       )}
       {modal === 'projects' && <Modal title="Projects" onClose={close}><Projects code={code} store={store} onOpen={load} /></Modal>}
-      {modal === 'repo' && (
-        <Modal title="Repository" onClose={close}>
+      {modal === 'examples' && (
+        <Modal title="Examples" onClose={close}>
           {EXAMPLES.map((x) => (
             <div className="item" key={x.name}>
               <div><strong>{x.name}</strong><small>{x.note}</small></div>

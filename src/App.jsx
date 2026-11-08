@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import Entry from './Entry'
 import CookieBanner from './components/CookieBanner'
 
-// Everything except the home page loads on demand, so the first visit stays small and fast.
+// Everything loads on demand, so the first visit stays small and fast.
+const Landing = lazy(() => import('./Landing'))
+const Entry = lazy(() => import('./Entry'))
+const Pricing = lazy(() => import('./pages/Pricing'))
 const AuthLayout = lazy(() => import('./lib/auth').then((m) => ({ default: m.AuthLayout })))
 const Login = lazy(() => import('./pages/Login'))
 const AppRoute = lazy(() => import('./pages/AppRoute'))
@@ -31,7 +33,9 @@ export default function App() {
       <RouteChange />
       <Suspense fallback={<p className="center" role="status">Loading…</p>}>
         <Routes>
-          <Route path="/" element={<Entry />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/start" element={<Entry />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/app" element={<AppRoute />} />

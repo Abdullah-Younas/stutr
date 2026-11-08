@@ -7,15 +7,15 @@
 /* ---------- Sidebar buttons: black with white text ---------- */
 .Tree .group { gap: 6px; }
 .Tree .nav-item {
-  width: 100%; box-sizing: border-box; background: #000; color: #fff;
+  width: 100%; box-sizing: border-box; background: #0c1430; color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.1); font: inherit; text-align: left; cursor: pointer;
 }
-.Tree .nav-item:hover { background: #1c1c1c; }
+.Tree .nav-item:hover { background: #172857; }
 .Tree .nav-item svg { color: #fff; }
 .Tree .nav-item.active { border-color: rgba(255, 255, 255, 0.45); }
 .Tree .badge {
   margin-left: auto; padding: 2px 8px; font: 0.75rem monospace; font-style: normal;
-  text-transform: capitalize; color: #b9b9b9; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
+  text-transform: capitalize; color: #aab6da; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px;
 }
 .glyph { width: 22px; text-align: center; font-family: monospace; font-size: 0.95rem; color: #fff; }
 
@@ -27,7 +27,7 @@
 .modal {
   width: min(700px, 100%); max-height: calc(100vh - 48px);
   max-height: min(680px, calc(100dvh - 48px)); display: flex; flex-direction: column;
-  background: #101010; color: #f2f2f2; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0c1226; color: #eef3ff; border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px; box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 }
 .modal header {
@@ -35,35 +35,35 @@
   padding: 14px 16px 14px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .modal h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
-.modal .x { display: grid; place-items: center; width: 32px; height: 32px; color: #b9b9b9; background: none; border: none; border-radius: 8px; cursor: pointer; }
+.modal .x { display: grid; place-items: center; width: 32px; height: 32px; color: #aab6da; background: none; border: none; border-radius: 8px; cursor: pointer; }
 .modal .x:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .modal-body { min-height: 0; padding: 16px 20px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.modal h4 { margin: 4px 0 8px; font-size: 0.85rem; font-weight: 500; color: #8a8a8a; }
+.modal h4 { margin: 4px 0 8px; font-size: 0.85rem; font-weight: 500; color: #8d9bc0; }
 .modal-search {
-  flex: 1; min-width: 0; padding: 10px 12px; color: #f2f2f2; font: inherit; outline: none;
+  flex: 1; min-width: 0; padding: 10px 12px; color: #eef3ff; font: inherit; outline: none;
   background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
 }
 .modal-search:focus { border-color: rgba(255, 255, 255, 0.3); }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
 .tile {
   display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px;
-  background: #000; color: #fff; font: inherit; cursor: pointer;
+  background: #0c1430; color: #fff; font: inherit; cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px;
 }
-.tile:hover { background: #1c1c1c; }
+.tile:hover { background: #172857; }
 .tile.active { border-color: #fff; }
 .row { display: flex; gap: 8px; }
 .btn {
-  padding: 8px 14px; background: #000; color: #fff; font: inherit; white-space: nowrap; cursor: pointer;
+  padding: 8px 14px; background: #0c1430; color: #fff; font: inherit; white-space: nowrap; cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px;
 }
-.btn:hover { background: #1c1c1c; }
+.btn:hover { background: #172857; }
 .btn.ghost { color: #ff8a80; border-color: rgba(255, 138, 128, 0.35); }
 .item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
 .item > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.item small { color: #8a8a8a; }
-.empty { margin: 0; color: #8a8a8a; }
-.docs { margin: 0; padding: 14px; overflow: auto; font: 13px/1.7 monospace; white-space: pre; background: #000; border-radius: 12px; }
+.item small { color: #8d9bc0; }
+.empty { margin: 0; color: #8d9bc0; }
+.docs { margin: 0; padding: 14px; overflow: auto; font: 13px/1.7 monospace; white-space: pre; background: #0c1430; border-radius: 12px; }
 
 /* ---------- Editor tab: the canvas fills the whole panel ---------- */
 .circuit {
@@ -77,62 +77,62 @@
 .circuit.tool-NOR svg, .circuit.tool-XOR svg, .circuit.tool-IN svg, .circuit.tool-OUT svg { cursor: copy; }
 .CodeEditor { margin-top: 12px; }
 
-.wire { fill: none; stroke: #2f6b4a; stroke-width: 3; stroke-linejoin: round; }
-.wire.hi { stroke: #3ddc84; }
-.part rect, .part circle { fill: #181818; stroke: #cfcfcf; stroke-width: 2; }
-.part rect.on { fill: #1f5a3a; stroke: #3ddc84; }
-.part.sel rect { stroke: #7cc4ff; }
-.part text { fill: #f2f2f2; font: 600 15px monospace; pointer-events: none; }
-.part text.lbl { font-size: 13px; fill: #9a9a9a; }
-.pin { fill: #141414; stroke: #8a8a8a; stroke-width: 1.5; }
-.circuit.tool-wire .pin:hover, .pin.pending { stroke: #3ddc84; fill: #3ddc84; }
+.wire { fill: none; stroke: #2f4a86; stroke-width: 3; stroke-linejoin: round; }
+.wire.hi { stroke: #3be0ff; }
+.part rect, .part circle { fill: #0f1a38; stroke: #b9c6ee; stroke-width: 2; }
+.part rect.on { fill: #0e4a66; stroke: #3be0ff; }
+.part.sel rect { stroke: #ffb454; }
+.part text { fill: #eef3ff; font: 600 15px monospace; pointer-events: none; }
+.part text.lbl { font-size: 13px; fill: #8d9bc0; }
+.pin { fill: #0b1226; stroke: #8d9bc0; stroke-width: 1.5; }
+.circuit.tool-wire .pin:hover, .pin.pending { stroke: #3be0ff; fill: #3be0ff; }
 
 .hint {
-  position: absolute; left: 16px; bottom: 16px; padding: 6px 12px; font-size: 0.85rem; color: #b9b9b9;
+  position: absolute; left: 16px; bottom: 16px; padding: 6px 12px; font-size: 0.85rem; color: #aab6da;
   background: rgba(8, 8, 8, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;
 }
 .inspector {
-  position: absolute; top: 16px; right: 16px; width: 200px; padding: 14px; font-size: 0.9rem; color: #f2f2f2;
+  position: absolute; top: 16px; right: 16px; width: 200px; padding: 14px; font-size: 0.9rem; color: #eef3ff;
   background: rgba(8, 8, 8, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px;
 }
 .inspector h4 { margin: 0 0 10px; font-family: monospace; }
-.inspector label { display: flex; flex-direction: column; gap: 4px; color: #8a8a8a; }
+.inspector label { display: flex; flex-direction: column; gap: 4px; color: #8d9bc0; }
 .inspector input {
-  padding: 6px 8px; background: rgba(255, 255, 255, 0.05); color: #f2f2f2; font: inherit;
+  padding: 6px 8px; background: rgba(255, 255, 255, 0.05); color: #eef3ff; font: inherit;
   border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; outline: none;
 }
-.inspector p { display: flex; justify-content: space-between; margin: 10px 0 0; color: #8a8a8a; }
-.inspector p span { color: #f2f2f2; font-family: monospace; }
+.inspector p { display: flex; justify-content: space-between; margin: 10px 0 0; color: #8d9bc0; }
+.inspector p span { color: #eef3ff; font-family: monospace; }
 .inspector button {
   width: 100%; margin-top: 12px; padding: 7px; color: #ff8a80; font: inherit; cursor: pointer;
   background: none; border: 1px solid rgba(255, 138, 128, 0.35); border-radius: 8px;
 }
 
 /* ---------- part library additions ---------- */
-.part text.pl { font: 400 10px monospace; fill: #8a8a8a; }
+.part text.pl { font: 400 10px monospace; fill: #8d9bc0; }
 .part rect.led { fill: #ff4d4d; stroke: #ff9a9a; }
-.part rect.seg { fill: #262626; stroke: none; }
+.part rect.seg { fill: #1a2a55; stroke: none; }
 .part rect.seg.on { fill: #ff4d4d; }
 .tile .glyph { min-height: 22px; line-height: 22px; }
-.tile small { font-size: 0.7rem; color: #8a8a8a; }
+.tile small { font-size: 0.7rem; color: #8d9bc0; }
 .tile.soon { opacity: 0.4; cursor: not-allowed; }
-.tile.soon:hover { background: #000; }
+.tile.soon:hover { background: #0c1430; }
 
 /* ---------- buses, notes, devices, selection ---------- */
 .wire.bus { stroke-width: 5; }
-.part rect.note { fill: transparent; stroke: #555; stroke-dasharray: 4 3; }
+.part rect.note { fill: transparent; stroke: #3b4d85; stroke-dasharray: 4 3; }
 .part text.mono { font: 400 12px monospace; }
-.part circle.dot { fill: #262626; stroke: none; }
+.part circle.dot { fill: #1a2a55; stroke: none; }
 .part circle.dot.on { fill: #ff4d4d; }
-.part circle.knob { fill: #7cc4ff; stroke: none; }
-.band { fill: rgba(124, 196, 255, 0.12); stroke: #7cc4ff; stroke-dasharray: 4 3; pointer-events: none; }
+.part circle.knob { fill: #ffb454; stroke: none; }
+.band { fill: rgba(255, 180, 84, 0.12); stroke: #ffb454; stroke-dasharray: 4 3; pointer-events: none; }
 .circuit.tool-box svg { cursor: crosshair; }
 .circuit.tool-menu svg, .circuit.tool-label svg { cursor: help; }
 .ctx {
   position: absolute; z-index: 5; display: flex; flex-direction: column; min-width: 130px; padding: 4px;
-  background: #101010; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: #0c1226; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-.ctx button { padding: 7px 10px; text-align: left; color: #f2f2f2; font: inherit; background: none; border: none; border-radius: 7px; cursor: pointer; }
+.ctx button { padding: 7px 10px; text-align: left; color: #eef3ff; font: inherit; background: none; border: none; border-radius: 7px; cursor: pointer; }
 .ctx button:hover { background: rgba(255, 255, 255, 0.08); }
 .ctx button.danger { color: #ff8a80; }
 .inspector { width: 220px; display: flex; flex-direction: column; gap: 10px; max-height: calc(100% - 32px); overflow-y: auto; }
@@ -143,39 +143,43 @@
 /* ---------- run bar ---------- */
 .runbar { position: absolute; left: 16px; top: 16px; z-index: 2; display: flex; gap: 8px; }
 .runbar button, .runbar select {
-  padding: 6px 12px; color: #f2f2f2; font: inherit; font-size: 0.85rem; cursor: pointer;
+  padding: 6px 12px; color: #eef3ff; font: inherit; font-size: 0.85rem; cursor: pointer;
   background: rgba(8, 8, 8, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;
 }
-.runbar button:hover { background: #1c1c1c; }
-.runbar button.on { color: #3ddc84; border-color: #3ddc84; }
+.runbar button:hover { background: #172857; }
+.runbar button.on { color: #3be0ff; border-color: #3be0ff; }
 .runbar button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ---------- Logisim-style part graphics ---------- */
 .part rect.hit { fill: transparent; stroke: none; }
 .part.sel rect.hit { stroke: none; }
-.part path.shape { fill: #181818; stroke: #cfcfcf; stroke-width: 2; stroke-linejoin: round; }
+.part path.shape { fill: #0f1a38; stroke: #b9c6ee; stroke-width: 2; stroke-linejoin: round; }
 .part path.shape.open { fill: none; }
-.part.sel path.shape, .part.sel path.mark { stroke: #7cc4ff; }
-.part path.mark { fill: none; stroke: #cfcfcf; stroke-width: 2; stroke-linejoin: round; }
-.part rect.key { fill: #2a2a2a; stroke: #8a8a8a; }
-.part rect.key.on { fill: #3ddc84; stroke: #3ddc84; }
+.part.sel path.shape, .part.sel path.mark { stroke: #ffb454; }
+.part path.mark { fill: none; stroke: #b9c6ee; stroke-width: 2; stroke-linejoin: round; }
+.part rect.key { fill: #1d2c58; stroke: #8d9bc0; }
+.part rect.key.on { fill: #3be0ff; stroke: #3be0ff; }
 .part text.big { font: 600 26px monospace; }
 .tile svg.mini path, .tile svg.mini circle { fill: none; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
 
 /* ---------- wiring by dragging, tool bar, shortcut keys ---------- */
 .pin { cursor: crosshair; }
-.pin:hover { stroke: #3ddc84; fill: #3ddc84; }
+.pin:hover { stroke: #3be0ff; fill: #3be0ff; }
 .wire.ghost { pointer-events: none; stroke-dasharray: 5 4; }
 .toolbar { position: absolute; left: 16px; top: 56px; z-index: 2; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 270px); }
 .toolbar button {
-  display: flex; align-items: center; gap: 6px; padding: 5px 10px; color: #b9b9b9; font: inherit; font-size: 0.8rem; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; padding: 5px 10px; color: #aab6da; font: inherit; font-size: 0.8rem; cursor: pointer;
   background: rgba(8, 8, 8, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 9px;
 }
-.toolbar button:hover { color: #fff; background: #1c1c1c; }
-.toolbar button.on { color: #fff; background: #2b2b2b; border-color: rgba(255, 255, 255, 0.4); }
+.toolbar button:hover { color: #fff; background: #172857; }
+.toolbar button.on { color: #fff; background: #1f3270; border-color: rgba(255, 255, 255, 0.4); }
 kbd {
-  padding: 1px 5px; color: #8a8a8a; font: 0.7rem monospace; background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px; color: #8d9bc0; font: 0.7rem monospace; background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 4px;
 }
 .tile { position: relative; }
 .tile kbd { position: absolute; top: 6px; right: 6px; }
+
+/* ---------- hardware lab placeholders ---------- */
+.Tree .nav-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.Tree .nav-item:disabled:hover { background: #0c1430; }
