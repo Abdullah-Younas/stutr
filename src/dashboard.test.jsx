@@ -90,12 +90,12 @@ describe('settings', () => {
 
   it('hides the grid and part names when switched off, and remembers the choice', () => {
     mount()
-    expect(document.querySelector('rect[fill="url(#dots)"]')).not.toBeNull()
+    expect(document.querySelector('rect[fill="url(#board)"]')).not.toBeNull()
     open()
     const dialog = screen.getByRole('dialog', { name: 'Settings' })
     fireEvent.click(within(dialog).getByLabelText(/Show grid dots/))
     fireEvent.click(within(dialog).getByLabelText(/Show part names/))
-    expect(document.querySelector('rect[fill="url(#dots)"]')).toBeNull()
+    expect(document.querySelector('rect[fill="url(#board)"]')).toBeNull()
     expect(q('.lbl').length).toBe(0)
     expect(JSON.parse(localStorage.getItem('stutr-settings'))).toMatchObject({ grid: false, names: false })
   })
@@ -143,5 +143,14 @@ describe('menu, projects and new circuit', () => {
     const dialog = screen.getByRole('dialog', { name: 'Examples' })
     fireEvent.click(within(dialog).getAllByRole('button', { name: 'Open' })[0])
     expect(q('.part').length).toBeGreaterThan(30)
+  })
+
+  it('an LED screen in the code appears on the canvas with its size', () => {
+    mount()
+    fireEvent.change(document.querySelector('textarea'), { target: { value: 'scr = screen<3>(None, None, None, None, None, None, width=32, height=16)' } })
+    expect(q('.scr-bezel').length).toBe(1)
+    expect(document.querySelector('.scr-size').textContent).toBe('32×16')
+    fireEvent.pointerDown(q('.scr-open')[0])
+    expect(screen.getByRole('dialog', { name: /LED screen/ })).toBeTruthy()
   })
 })

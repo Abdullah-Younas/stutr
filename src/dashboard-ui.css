@@ -1,0 +1,181 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+/* Dashboard look: the same midnight-navy board as the landing page. Loaded last, so it wins. */
+.DashBG {
+  --s0: #070b16; --s1: #0b1226; --s2: #0f1730; --s3: #14204a; --ln: rgba(255, 255, 255, 0.11);
+  --tx: #eef3ff; --tx2: #9fb0d6; --tx3: #6f80ad; --ac: #3d6bff; --live: #3be0ff; --sel: #ffb454; --hot: #ff5470;
+  gap: 12px; padding: 12px;
+  font: 14px/1.45 "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(900px 560px at 72% -8%, rgba(22, 53, 138, 0.65), transparent), radial-gradient(700px 520px at 0% 100%, rgba(15, 42, 106, 0.4), transparent), var(--s0);
+}
+.DashBG kbd, .DashBG .stat, .DashBG .badge { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+/* ---------- sidebar: a floating card ---------- */
+.DashBG .Tree {
+  width: 248px; min-width: 248px; border: 1px solid var(--ln); border-radius: 20px;
+  background: rgba(11, 18, 38, 0.82); backdrop-filter: blur(10px); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+.DashBG .brand { height: 58px; padding: 0 16px; border-bottom: 1px dashed rgba(255, 255, 255, 0.15); }
+.DashBG .brand-logo { width: 30px; height: 30px; border-radius: 9px; font: 700 15px "JetBrains Mono", monospace; background: var(--ac); box-shadow: 0 0 0 4px rgba(61, 107, 255, 0.18); }
+.DashBG .brand-name { font: 700 17px "JetBrains Mono", monospace; }
+.DashBG .search { height: 36px; margin: 12px 12px 4px; border-radius: 12px; }
+.DashBG .group { padding: 12px 10px 2px; }
+.DashBG .group-label { padding: 0 10px 6px; font: 500 10.5px "JetBrains Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tx3); }
+.DashBG .Tree .nav-item { height: 36px; padding: 0 10px; border: 1px solid transparent; border-radius: 11px; font-size: 14px; }
+.DashBG .Tree .nav-item:hover { background: rgba(255, 255, 255, 0.06); }
+.DashBG .Tree .nav-item.active { background: rgba(61, 107, 255, 0.16); border-color: rgba(61, 107, 255, 0.55); box-shadow: none; }
+.DashBG .Tree .badge { border-radius: 999px; background: rgba(255, 255, 255, 0.07); }
+.DashBG .account { border-top: 1px dashed rgba(255, 255, 255, 0.15); }
+
+/* ---------- main panel ---------- */
+.DashBG .Main {
+  border: 1px solid var(--ln); border-radius: 20px; background: rgba(7, 11, 22, 0.8); backdrop-filter: blur(10px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+.DashBG .topbar { height: 52px; padding: 0 12px; gap: 10px; background: transparent; border-bottom: 1px dashed rgba(255, 255, 255, 0.13); }
+.DashBG .SelectionBar { height: 34px; padding: 3px; gap: 2px; background: var(--s2); border: 1px solid var(--ln); border-radius: 999px; }
+.DashBG .SelectionBar button { height: 26px; padding: 0 16px; font: 500 13px "JetBrains Mono", monospace; border: 0; border-radius: 999px; color: var(--tx2); }
+.DashBG .SelectionBar button:hover { color: var(--tx); }
+.DashBG .SelectionBar button.active { color: var(--s0); background: var(--live); border: 0; }
+.DashBG .stat { margin-left: 0; padding: 3px 10px; border: 1px solid var(--ln); border-radius: 999px; }
+.DashBG .layout-btns { border-radius: 999px; background: var(--s2); }
+.DashBG .layout-btns button { border-radius: 999px; }
+.DashBG .burger { height: 34px; width: 34px; border: 1px solid var(--ln); border-radius: 10px; }
+.DashBG .split-handle { background: transparent; }
+.DashBG .split-handle:hover, .DashBG .split-handle:focus-visible { background: var(--ac); }
+
+/* ---------- the board ---------- */
+.DashBG .circuit { background: radial-gradient(820px 500px at 50% 38%, rgba(19, 41, 107, 0.55), transparent), var(--s0); border-radius: 0 0 20px 20px; }
+.DashBG .circuit svg { top: 0; left: 0; width: 100%; height: 100%; }
+.DashBG .gl { fill: none; stroke: rgba(79, 124, 255, 0.17); stroke-width: 1; }
+.DashBG .gcell { fill: rgba(59, 224, 255, 0.13); stroke: rgba(59, 224, 255, 0.4); stroke-width: 1; pointer-events: none; }
+
+/* floating controls */
+.DashBG .runbar, .DashBG .toolbar, .DashBG .hint, .DashBG .inspector {
+  background: rgba(11, 18, 38, 0.9); border: 1px solid var(--ln); backdrop-filter: blur(10px); box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+}
+.DashBG .runbar { top: 12px; left: 12px; right: auto; width: auto; max-width: calc(100% - 24px); height: 44px; padding: 5px; border-radius: 999px; }
+.DashBG .runbar button, .DashBG .runbar select { height: 32px; padding: 0 14px; border-radius: 999px; }
+.DashBG .runbar select { padding: 0 8px; }
+.DashBG .runbar button:first-child { padding: 0 20px; font-weight: 700; background: var(--ac); box-shadow: 0 0 0 0 rgba(61, 107, 255, 0.45); transition: box-shadow 0.3s; }
+.DashBG .runbar button:first-child:hover:not(:disabled) { background: var(--ac); box-shadow: 0 0 0 6px rgba(61, 107, 255, 0.2); }
+.DashBG .runbar button:first-child.on { background: transparent; }
+.DashBG .toolbar { top: 68px; left: 12px; bottom: auto; width: 128px; max-height: calc(100% - 124px); padding: 6px; gap: 2px; border-radius: 16px; }
+.DashBG .toolbar button { height: 31px; padding: 0 9px; border-radius: 10px; font-size: 13px; }
+.DashBG .toolbar button.on { background: rgba(61, 107, 255, 0.2); box-shadow: inset 0 0 0 1px rgba(61, 107, 255, 0.7); }
+.DashBG .hint { left: 50%; right: auto; bottom: 12px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); height: 28px; padding: 0 14px; border-radius: 999px; font: 11.5px/26px "JetBrains Mono", monospace; pointer-events: none; }
+.DashBG .inspector { top: 12px; right: 12px; bottom: auto; width: 244px; max-height: calc(100% - 64px); border-radius: 16px; }
+.DashBG .inspector input { border-radius: 9px; }
+.DashBG .inspector button { border-radius: 10px; height: 30px; }
+.DashBG .inspector button.primary { color: #fff; background: var(--ac); border-color: var(--ac); }
+.DashBG .ctx { border-radius: 12px; }
+
+/* ---------- parts: the gates, switches and LEDs from the landing page ---------- */
+.DashBG .part rect:not(.hit):not(.note), .DashBG .part circle { fill: #14204a; stroke: #9fb0d6; stroke-width: 2.2; transition: fill 0.2s, stroke 0.2s, filter 0.2s; }
+.DashBG .part rect.hit { fill: transparent; stroke: none; }
+.DashBG .part rect.note { fill: transparent; stroke: #3b4d85; stroke-dasharray: 4 3; }
+.DashBG .part .shape { fill: #14204a; stroke: #eef3ff; stroke-width: 2.5; stroke-linejoin: round; transition: fill 0.2s, stroke 0.2s, filter 0.2s; }
+.DashBG .part .shape.open { fill: none; }
+.DashBG .part .shape.hi { fill: #123354; stroke: #3be0ff; filter: drop-shadow(0 0 7px rgba(59, 224, 255, 0.55)); }
+.DashBG .part .shape.open.hi { filter: none; }
+.DashBG .part .mark { stroke: #eef3ff; stroke-width: 2.5; stroke-linecap: round; }
+.DashBG .part rect.on { fill: #0f4263; stroke: #3be0ff; filter: drop-shadow(0 0 8px rgba(59, 224, 255, 0.5)); }
+.DashBG .part rect.led { fill: #ff5470; stroke: #ffc4cd; filter: drop-shadow(0 0 13px #ff5470); }
+.DashBG .part rect.sw { fill: #14204a; stroke: #9fb0d6; }
+.DashBG .part rect.sw.on { fill: #3be0ff; stroke: #3be0ff; filter: none; }
+.DashBG .part circle.kn { fill: #eef3ff; stroke: none; }
+.DashBG .part .kn-g { transition: transform 0.2s; }
+.DashBG .part text.sw-val { fill: #9fb0d6; font: 700 11px "JetBrains Mono", monospace; }
+.DashBG .part rect.sw.on ~ text.sw-val { fill: #070b16; }
+.DashBG .part rect.key { fill: #1d2c58; stroke: #8d9bc0; }
+.DashBG .part rect.key.on { fill: #3be0ff; stroke: #3be0ff; }
+.DashBG .part rect.seg { fill: #16224a; stroke: none; }
+.DashBG .part rect.seg.on { fill: #ff5470; filter: drop-shadow(0 0 5px #ff5470); }
+.DashBG .part circle.dot { fill: #16224a; stroke: none; }
+.DashBG .part circle.dot.on { fill: #ff5470; filter: drop-shadow(0 0 5px #ff5470); }
+.DashBG .part circle.knob { fill: #ffb454; stroke: none; }
+.DashBG .part text { font-family: "JetBrains Mono", monospace; }
+.DashBG .part.sel .shape, .DashBG .part.sel .mark { stroke: #ffb454; }
+.DashBG .part.sel rect:not(.hit):not(.on):not(.led):not(.sw) { stroke: #ffb454; }
+.DashBG .part.sel rect.sw { stroke: #ffb454; }
+
+/* wires: dim trace, bright when live, with a pulse running along it */
+.DashBG .wire { stroke: #2f4a86; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.25s; }
+.DashBG .wire.bus { stroke-width: 6; }
+.DashBG .wire.hi { stroke: #3be0ff; }
+.DashBG .wire.pulse { stroke: #e6fbff; stroke-width: 2.5; stroke-dasharray: 4 16; pointer-events: none; animation: ui-flow 0.7s linear infinite; }
+.DashBG .wire.bus.pulse { stroke-width: 3; }
+.DashBG .wire.ghost { stroke-dasharray: 5 5; animation: none; }
+@keyframes ui-flow { to { stroke-dashoffset: -20; } }
+.DashBG .pin { fill: #0b1226; stroke: #6f80ad; stroke-width: 1.5; }
+.DashBG .pin:hover { fill: #3be0ff; stroke: #3be0ff; }
+.DashBG .pin.fan { fill: #3be0ff; stroke: #3be0ff; }
+
+/* LED screen part */
+.DashBG .part rect.scr-bezel { fill: #0a1020; stroke: #2a3a73; stroke-width: 2; }
+.DashBG .part .scr-img { image-rendering: auto; }
+.DashBG .part text.scr-size { fill: #6f80ad; font: 500 10px "JetBrains Mono", monospace; }
+.DashBG .part .scr-open { cursor: pointer; }
+.DashBG .part .scr-open rect { fill: #0b1226; stroke: #3be0ff; stroke-width: 1.4; }
+.DashBG .part .scr-open path { fill: none; stroke: #3be0ff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.DashBG .part .scr-open:hover rect { fill: #14204a; }
+
+/* ---------- dialogs ---------- */
+.DashBG .overlay { backdrop-filter: blur(6px); }
+.DashBG .modal { border-radius: 20px; background: rgba(11, 18, 38, 0.97); border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7); }
+.DashBG .modal.wide { width: min(1120px, 100%); max-height: min(940px, calc(100dvh - 32px)); }
+.DashBG .modal header { border-bottom: 1px dashed rgba(255, 255, 255, 0.15); }
+.DashBG .tile, .DashBG .item { border-radius: 14px; }
+.DashBG .btn { border-radius: 10px; }
+.DashBG .btn[type="submit"] { border-radius: 999px; background: var(--ac); border-color: var(--ac); }
+.DashBG .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.DashBG .toast { border-radius: 999px; }
+
+/* ---------- LED screen studio ---------- */
+.scr { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.scr-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.scr-lab { width: 58px; font: 500 10.5px "JetBrains Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); }
+.scr input[type="number"], .scr select {
+  height: 32px; padding: 0 8px; color: var(--tx); font: inherit; background: var(--s2); border: 1px solid var(--ln); border-radius: 9px; outline: none;
+}
+.scr input[type="number"] { width: 78px; }
+.scr input[type="color"] { width: 38px; height: 30px; padding: 2px; background: var(--s2); border: 1px solid var(--ln); border-radius: 9px; cursor: pointer; }
+.scr-brush { display: flex; align-items: center; gap: 8px; margin: 0 6px; font: 500 12px "JetBrains Mono", monospace; color: var(--tx2); }
+.scr-brush input { width: 110px; accent-color: var(--live); }
+.chip {
+  height: 28px; padding: 0 11px; color: var(--tx2); font: 500 12px "JetBrains Mono", monospace; cursor: pointer;
+  background: transparent; border: 1px solid var(--ln); border-radius: 999px;
+}
+.chip:hover { color: var(--tx); }
+.chip.on { color: var(--s0); background: var(--live); border-color: var(--live); }
+.scr-stage {
+  display: flex; max-height: 58vh; padding: 14px; overflow: auto; border: 1px solid var(--ln); border-radius: 14px;
+  background-color: var(--s0); background-image: linear-gradient(rgba(79, 124, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(79, 124, 255, 0.13) 1px, transparent 1px); background-size: 32px 32px;
+}
+.scr-canvas { display: block; flex: none; margin: auto; height: auto; cursor: crosshair; touch-action: none; border-radius: 4px; box-shadow: 0 0 0 1px #2a3a73, 0 0 44px rgba(61, 107, 255, 0.25); }
+.scr-canvas.px { image-rendering: pixelated; }
+.scr-foot { margin: 0; font: 12px "JetBrains Mono", monospace; color: var(--tx3); }
+
+/* ---------- phones and narrow panels: the controls fold into bars ---------- */
+@media (max-width: 800px) {
+  .DashBG { padding: 0; gap: 0; }
+  .DashBG .Tree { width: min(300px, 86vw); min-width: 0; border-radius: 0; }
+  .DashBG .Main { border: 0; border-radius: 0; }
+  .DashBG .circuit { border-radius: 0; }
+  .DashBG .runbar { left: 8px; right: 8px; overflow-x: auto; }
+  .DashBG .toolbar { top: 64px; left: 8px; right: 8px; bottom: auto; flex-direction: row; width: auto; max-height: none; height: 42px; padding: 5px; overflow: auto hidden; border-radius: 999px; }
+  .DashBG .toolbar button { flex-shrink: 0; width: auto; gap: 8px; }
+  .DashBG .inspector { top: auto; right: 8px; left: 8px; bottom: 48px; width: auto; max-height: 45%; }
+  .DashBG .hint { display: none; }
+}
+@container pane (max-width: 560px) {
+  .DashBG .runbar { left: 8px; right: 8px; overflow-x: auto; }
+  .DashBG .toolbar { top: 64px; left: 8px; right: 8px; bottom: auto; flex-direction: row; width: auto; max-height: none; height: 42px; padding: 5px; overflow: auto hidden; border-radius: 999px; }
+  .DashBG .toolbar button { flex-shrink: 0; width: auto; gap: 8px; }
+  .DashBG .inspector { top: auto; right: 8px; left: 8px; bottom: 48px; width: auto; max-height: 45%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .DashBG .wire.pulse { animation: none; }
+  .DashBG .part .kn-g { transition: none; }
+}

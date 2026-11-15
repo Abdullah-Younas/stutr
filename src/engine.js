@@ -31,6 +31,18 @@ export const shift = (v, s, m, w, mode) => {
   return (v << s) & m
 }
 
+/* ---- LED screen: ONE part that owns a width x height pixel buffer (not one part per LED) ---- */
+export const SMAX = 2048 // biggest side. Raise it if you want; the buffer is 2 bytes per pixel
+export const SW = (c) => Math.max(1, Math.min(SMAX, Math.round(c.n ?? 16) || 1))
+export const SH = (c) => Math.max(1, Math.min(SMAX, Math.round(c.n2 ?? 16) || 1))
+export const screenCell = (w, h) => Math.min(12, 240 / Math.max(w, h)) // on-canvas size of one pixel
+export const blank = (w, h) => ({ px: new Uint16Array(w * h), w, h, v: 0 })
+export const buf = (c) => (c.s?.px && c.s.w === SW(c) && c.s.h === SH(c) ? c.s : blank(SW(c), SH(c)))
+const screenDim = (c) => {
+  const w = SW(c), h = SH(c), k = screenCell(w, h)
+  return [Math.max(120, Math.round(w * k) + 40), Math.max(140, Math.round(h * k) + 16)]
+}
+
 export const DEFS = {
   /* ---- wiring + pins ---- */
   IN: def('0', [], [N], (_, c) => [c.v || 0], { toggle: true, bit: true, bits: 1, dim: bitDim }),
@@ -142,6 +154,18 @@ export const DEFS = {
       return ch === 8 ? s.slice(0, -1) : ch === 13 || ch === 10 ? s + '\n' : ch >= 32 ? s + String.fromCharCode(ch) : s
     },
   }),
+  // writes D at (X, Y) on a rising clock edge while WE is 1. CLR wipes the screen. Click it to paint by hand.
+  SCREEN: def('', ['X', 'Y', 'D', 'WE', 'CLR', '>'], [], null, {
+    seq: true, clk: 5, bits: 3, blabel: 'Color bits', n: 16, nlabel: 'Width', nmin: 1, nmax: SMAX, n2: 16, n2label: 'Height',
+    attr: 'Color (hex)', adef: '#ff5470', dim: screenDim, q: () => [],
+    iw: (c) => [lg(SW(c)), lg(SH(c)), W(c), 1, 1, 1],
+    next: (i, c) => {
+      const w = SW(c), h = SH(c), s = buf(c)
+      if (i[4]) s.px.fill(0)
+      else if (i[3] && i[0] < w && i[1] < h) s.px[i[1] * w + i[0]] = i[2] & mk(W(c))
+      return { px: s.px, w, h, v: s.v + 1 } // the pixels change in place: copying 640,000 of them per tick would be far too slow
+    },
+  }),
   TEXT: def('', [], [], () => [], { note: true, attr: 'Text', adef: 'text', dim: (c) => [Math.max(40, 9 * TX(c).length + 16), 30] }),
 }
 
@@ -233,6 +257,7 @@ export const META = {
   DFF: { names: ['q', 'nq'] }, TFF: { names: ['q', 'nq'] }, JKFF: { names: ['q', 'nq'] }, SRFF: { names: ['q', 'nq'] },
   CONST: { nkey: 'value' }, EXT: { nkey: 'to', akey: 'fill' }, SHIFT: { akey: 'mode' }, SHREG: { nkey: 'stages' },
   RAM: { nkey: 'addr' }, ROM: { nkey: 'addr', akey: 'data' }, MATRIX: { nkey: 'rows' },
+  SCREEN: { nkey: 'width', n2key: 'height', akey: 'color' },
   TUNNEL: { akey: 'tag' }, PULL: { akey: 'to' }, TRANS: { akey: 'kind' }, TEXT: { akey: 'text' },
 }
 export const M = (t) => META[t] || {}
@@ -258,7 +283,8 @@ export const gen = ({ parts, wires }) =>
       else if (c.type === 'CONST') refs.push(String(c.n ?? 1))
       else if (c.type === 'TEXT') refs.push(JSON.stringify(TX(c)))
     }
-    if (c.n != null && me.nkey && c.type !== 'CONST') refs.push(`${me.nkey}=${c.n}`)
+    if (c.type === 'SCREEN') refs.push(`width=${SW(c)}`, `height=${SH(c)}`)
+    else if (c.n != null && me.nkey && c.type !== 'CONST') refs.push(`${me.nkey}=${c.n}`)
     if (c.text && me.akey && ins.length) refs.push(`${me.akey}=${JSON.stringify(c.text)}`)
     return `${c.id} = ${PREF[c.type] ?? c.type.toLowerCase()}${c.bits != null ? `<${c.bits}>` : ''}(${refs.join(', ')})`
   }).join('\n')
@@ -299,6 +325,7 @@ export const parse = (text, prev = {}) => {
       if (v === undefined) errs.push(`Line ${n}: can't read the value of ${kw[1]}`)
       else if (kw[1] === 'bits' && typeof v === 'number') p.bits = clamp(v, 1, 16)
       else if (kw[1] === me.nkey && typeof v === 'number') p.n = clamp(v, 0, 65535)
+      else if (kw[1] === me.n2key && typeof v === 'number') p.n2 = clamp(v, 0, 65535)
       else if (kw[1] === me.akey) p.text = String(v)
       else errs.push(`Line ${n}: ${m[2]} has no setting "${kw[1]}"`)
     }
@@ -331,7 +358,10 @@ export const parse = (text, prev = {}) => {
   }
   parts.forEach((p) => {
     const o = prev[p.id]
-    if (o && o.type === p.type) { p.x = o.x; p.y = o.y }
+    if (o && o.type === p.type) {
+      p.x = o.x; p.y = o.y
+      if (p.type === 'SCREEN') { p.s = o.s; p.pc = o.pc } // editing the code must not wipe a painted screen
+    }
   })
   const clash = (p) => parts.some((q) => {
     if (q === p || q.x == null) return false

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { dims, gen, parse, settle, sim } from './engine'
+import { buf, dims, gen, parse, settle, sim } from './engine'
+import { inkOf, lutFor, resized, stroke } from './screen'
 import { EXAMPLES } from './examples'
 
 const load = (code) => {
@@ -68,5 +69,50 @@ describe('language', () => {
     const r = parse('A = input(1)\nY = output(A)\nZ = not(A)', prev)
     expect(r.parts.find((p) => p.id === 'A').x).toBe(prev.A.x)
     expect(r.parts.find((p) => p.id === 'Z').x).toBeDefined()
+  })
+})
+
+describe('LED screen', () => {
+  const run = (code, ticks) => {
+    let c = settle(parse(code))
+    for (let i = 0; i < ticks; i++) {
+      for (const v of [1, 0]) c = settle({ ...c, parts: c.parts.map((p) => (p.id === 'ck' ? { ...p, v } : p)) })
+    }
+    return c
+  }
+  it('the example fills every pixel with x XOR y', () => {
+    const ex = EXAMPLES.find((e) => e.name.startsWith('LED screen'))
+    expect(parse(ex.code).errs).toEqual([])
+    const c = run(ex.code, 64), s = buf(c.parts.find((p) => p.id === 'scr'))
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) expect(s.px[y * 8 + x]).toBe(x ^ y)
+  })
+  it('keeps its size in the code and ignores writes outside the screen', () => {
+    const code = 'ck = clock()\nx = input<3>(7)\ny = input<3>(0)\nd = input<3>(5)\nwe = input(1)\nscr = screen<3>(x, y, d, we, None, ck, width=6, height=2)'
+    const c = run(code, 1), p = c.parts.find((q) => q.id === 'scr')
+    expect(gen(c)).toContain('width=6, height=2')
+    expect(buf(p).px.some((v) => v)).toBe(false) // x = 7 is past width 6
+  })
+  it('CLR wipes it, and editing the code does not', () => {
+    const code = 'ck = clock()\nx = input<2>(1)\ny = input<2>(1)\nd = input<2>(3)\nwe = input(1)\nclr = input(0)\nscr = screen<2>(x, y, d, we, clr, ck, width=4, height=4)'
+    let c = run(code, 1)
+    expect(buf(c.parts.find((p) => p.id === 'scr')).px[5]).toBe(3)
+    c = settle(parse(gen(c) + '\n# edit', Object.fromEntries(c.parts.map((p) => [p.id, p]))))
+    expect(buf(c.parts.find((p) => p.id === 'scr')).px[5]).toBe(3)
+    c = { ...c, parts: c.parts.map((p) => (p.id === 'clr' ? { ...p, v: 1 } : p.id === 'ck' ? { ...p, v: 0 } : p)) }
+    c = settle(c)
+    c = settle({ ...c, parts: c.parts.map((p) => (p.id === 'ck' ? { ...p, v: 1 } : p)) })
+    expect(buf(c.parts.find((p) => p.id === 'scr')).px.some((v) => v)).toBe(false)
+  })
+  it('paints strokes, resizes keeping pixels, and an 800 x 800 screen is just one part', () => {
+    const s = { px: new Uint16Array(16), w: 4, h: 4, v: 0 }
+    stroke(s.px, 4, 4, 0, 0, 3, 3, 1, 7)
+    expect([0, 5, 10, 15].every((i) => s.px[i] === 7)).toBe(true)
+    const r = resized(s, 8, 2)
+    expect(r.px[0]).toBe(7); expect(r.px[8 + 1]).toBe(7)
+    expect(inkOf(1, '#ff0000')).toBe(1)
+    expect(lutFor(3, '#ff0000')[0b100]).toBe(0xff0000ff) // red bit only
+    const big = parse('scr = screen<8>(None, None, None, None, None, None, width=800, height=800)')
+    expect(big.errs).toEqual([])
+    expect(buf(big.parts[0]).px.length).toBe(640000)
   })
 })

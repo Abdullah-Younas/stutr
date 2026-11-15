@@ -1,5 +1,5 @@
 export const DEFAULTS = { hz: 2, snap: true, grid: true, pinLabels: true, names: true, wires: 'elbow', autosave: true, confirmNew: true }
-export const HZ = [1, 2, 5, 10, 20]
+export const HZ = [1, 2, 5, 10, 20, 50, 100]
 const FLAGS = ['snap', 'grid', 'pinLabels', 'names', 'autosave', 'confirmNew']
 
 // Anything that comes from storage or the database is checked here before the app uses it.

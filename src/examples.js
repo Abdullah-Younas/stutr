@@ -18,4 +18,6 @@ export const EXAMPLES = [
     code: ["A = input(1)", "B = input(0)", "n1 = nand(A, B)", "n2 = nand(A, n1)", "n3 = nand(B, n1)", "n4 = nand(n2, n3)", "Y = output(n4)"].join('\n') },
   { name: "Majority vote", note: "Output is 1 when at least two inputs are 1.",
     code: ["A = input(1)", "B = input(1)", "C = input(0)", "ab = and(A, B)", "bc = and(B, C)", "ac = and(A, C)", "t = or(ab, bc)", "m = or(t, ac)", "Y = output(m)"].join('\n') },
+  { name: "LED screen (8x8)", note: "A counter visits every pixel and x XOR y picks its color. Press Run, or open the screen to paint on it.",
+    code: ["# an 8x8 screen: X, Y, D, WE, CLR, clock. Raise width and height for a bigger one (up to 2048)", "ck = clock()", "n = counter<6>(ck)", "sp = split<6>(n)", "x = merge<3>(sp[0], sp[1], sp[2])", "y = merge<3>(sp[3], sp[4], sp[5])", "d = xor<3>(x, y)", "we = constant(1)", "scr = screen<3>(x, y, d, we, None, ck, width=8, height=8)"].join('\n') },
 ]

@@ -1,8 +1,9 @@
 import './index.css'
 import './dashboard.css'
 import './studio.css'
+import './dashboard-ui.css'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, Cpu, Download, Eraser, FilePlus, Folder, Hand, LayoutGrid, Library, Lightbulb, Menu, MousePointer2, Search, Settings as Cog, Wrench, X } from 'lucide-react'
+import { BookOpen, Cpu, Download, Eraser, FilePlus, Folder, Hand, LayoutGrid, Library, Lightbulb, Menu, Monitor, MousePointer2, Search, Settings as Cog, Wrench, X } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './lib/auth'
 import { makeStore } from './lib/store'
@@ -11,8 +12,10 @@ import { getConsent, setConsent } from './lib/consent'
 import { usePageMeta } from './lib/meta'
 import { EXAMPLES } from './examples'
 import {
-  mk, pop, W, NN, TX, INS, OUTS, OW, shift, DEFS, dims, snap, pinIn, pinOut, NAME, START, sim, settle, M, clamp, gen, lit, parse,
+  mk, pop, W, NN, SW, SH, SMAX, TX, INS, OUTS, OW, shift, DEFS, dims, snap, pinIn, pinOut, NAME, START, sim, settle, M, clamp, gen, lit, parse,
 } from './engine'
+import { ScreenStudio, ScreenView } from './ScreenParts'
+import { resized } from './screen'
 
 /* ================= Code tab ================= */
 function CodeEditor({ code, onChange, err }) {
@@ -54,6 +57,7 @@ const HINTS = {
   erase: 'Erase (X): click a part or a wire. Tip: hold D in any tool to erase',
   menu: 'Menu (M): click a part for Duplicate and Delete',
   label: 'Label (L): click a part, then type its new name in the panel',
+  SCREEN: 'Click the canvas to place an LED screen. Double-click it, or use its corner button, to paint on it full size',
 }
 const TOOLBAR = [['poke', 'Poke', 'P'], ['select', 'Edit', 'E'], ['box', 'Select', 'S'], ['erase', 'Erase', 'X'], ['TEXT', 'Text', 'T'], ['menu', 'Menu', 'M'], ['label', 'Label', 'L']]
 const KEYS = Object.fromEntries(TOOLBAR.map(([t, , k]) => [k.toLowerCase(), t])) // key -> tool
@@ -74,7 +78,7 @@ const PATHS = {
   TUNNEL: (w, h) => `M0 ${h / 2}L10 0H${w}V${h}H10Z`,
 }
 const GSHAPE = new Set(['AND', 'NAND', 'OR', 'NOR', 'XOR', 'XNOR', 'NOT', 'BUF', 'CBUF', 'CINV'])
-const BARE = new Set(['SPLIT', 'MERGE', 'PULL', 'TRANS', 'POWER', 'GND'])
+const BARE = new Set(['SPLIT', 'MERGE', 'PULL', 'TRANS', 'POWER', 'GND', 'SCREEN'])
 const BIG = new Set(['ADD', 'SUB', 'MUL', 'DIV', 'BADD'])
 
 // the outline of a part
@@ -84,19 +88,29 @@ const frame = (c, d, w, h, v) => {
     return (
       <>
         <rect className="hit" width={w} height={h} />
-        <path className="shape" d={P} />
-        {(c.type === 'XOR' || c.type === 'XNOR') && <path className="shape open" d={`M0 0Q16 ${h / 2} 0 ${h}`} />}
+        <path className={`shape${v ? ' hi' : ''}`} d={P} />
+        {(c.type === 'XOR' || c.type === 'XNOR') && <path className={`shape open${v ? ' hi' : ''}`} d={`M0 0Q16 ${h / 2} 0 ${h}`} />}
       </>
     )
   }
   if (BARE.has(c.type)) return <rect className="hit" width={w} height={h} />
+  if (c.type === 'IN') return <><rect className="hit" width={w} height={h} /><rect className={`sw${v ? ' on' : ''}`} y={h / 2 - 13} width={w} height="26" rx="13" /></>
   return <rect width={w} height={h} rx={d.round ? 20 : 6} className={d.note ? 'note' : d.led ? (v ? 'led' : '') : (d.bit || c.type === 'CLK') && v ? 'on' : ''} />
 }
 
 // the drawing inside a part's box
-const body = (c, d, w, h, ins, v) => {
+const body = (c, d, w, h, ins, v, openScreen) => {
   const T = c.type
   if (GSHAPE.has(T)) return null // gates are fully drawn by frame()
+  if (T === 'SCREEN') return <ScreenView c={c} w={w} h={h} onOpen={() => openScreen(c.id)} />
+  if (T === 'IN' && W(c) === 1) {
+    return (
+      <>
+        <g className="kn-g" style={{ transform: `translateX(${v ? w - 26 : 0}px)` }}><circle className="kn" cx="13" cy={h / 2} r="9" /></g>
+        <text x={v ? 14 : w - 14} y={h / 2 + 4} textAnchor="middle" className="sw-val">{v ? 1 : 0}</text>
+      </>
+    )
+  }
   if (T === 'CLK') return <path className="mark" d="M7 27H14V13H26V27H33" />
   if (T === 'POWER') return <><path className="mark" d="M40 20H22" /><path className="shape" d="M22 8V32L8 20Z" /></>
   if (T === 'GND') return <path className="mark" d="M40 20H22M22 6V34M16 11V29M10 16V24" />
@@ -146,14 +160,16 @@ const body = (c, d, w, h, ins, v) => {
   return <text x={w / 2} y={h / 2 + (BIG.has(T) ? 9 : 5)} textAnchor="middle" className={BIG.has(T) ? 'big' : undefined}>{t}</text>
 }
 
+const GRID = 40 // one square of the board, the same look as the landing page grid
 const wirePath = (x1, y1, x2, y2, style) => (style === 'straight' ? `M${x1} ${y1}L${x2} ${y2}` : `M${x1} ${y1}H${(x1 + x2) / 2}V${y2}H${x2}`)
 
-function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo, redo, canUndo, canRedo }) {
+function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo, redo, canUndo, canRedo, openScreen }) {
   const { parts, wires } = circuit
   const [sels, setSels] = useState([])
   const [link, setLink] = useState(null) // a wire being dragged from a pin
   const [band, setBand] = useState(null)
   const [menu, setMenu] = useState(null)
+  const [cell, setCell] = useState(null) // the grid square under the pointer
   const [view, setView] = useState({ x: 0, y: 0, k: 1 })
   const pan = useRef(null)
   const drag = useRef(null)
@@ -286,6 +302,8 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
     }
   }
   const onMove = (e) => {
+    const [gx, gy] = point(e), cx = Math.floor(gx / GRID), cy = Math.floor(gy / GRID)
+    setCell((o) => (o && o[0] === cx && o[1] === cy ? o : [cx, cy]))
     if (link) { const [lx, ly] = point(e); return setLink({ ...link, x: lx, y: ly }) }
     if (pan.current) {
       const [rx, ry] = raw(e), a = pan.current
@@ -340,25 +358,31 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
       : { from: best.id, fp: best.k, to: link.id, pin: link.pin }
     update((m) => ({ ...m, wires: [...m.wires.filter((o) => !(o.to === w.to && o.pin === w.pin)), w] }))
   }
+  // a new screen size keeps the pixels that still fit
+  const resize = (c, nw, nh) => { mark(true); patch(c.id, { n: nw, n2: nh, s: resized(c.s?.px && c.s.w === SW(c) && c.s.h === SH(c) ? c.s : null, nw, nh) }) }
   const num = (key, lo, hi) => (e) => { mark(true); patch(cur.id, { [key]: clamp(+e.target.value || lo, lo, hi) }) }
+  const fan = {}
+  wires.forEach((w) => { const k = w.from + ':' + (w.fp || 0); fan[k] = (fan[k] || 0) + 1 })
   const vals = cur ? (OUTS(cur).length ? S.outs(cur.id) : S.ins(cur)) : []
 
   return (
     <div className={`circuit tool-${tool}${hold ? ' erasing' : ''}`}>
-      <svg ref={svg} role="img" aria-label="Circuit canvas. The Code tab is the keyboard-friendly text version of this circuit." onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={release} onWheel={onWheel}>
+      <svg ref={svg} role="img" aria-label="Circuit canvas. The Code tab is the keyboard-friendly text version of this circuit." onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={(e) => { release(e); setCell(null) }} onWheel={onWheel}>
         <defs>
-          <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.14)" />
+          <pattern id="board" width={GRID} height={GRID} patternUnits="userSpaceOnUse" patternTransform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+            <path className="gl" d={`M${GRID} 0H0V${GRID}`} />
           </pattern>
         </defs>
-        {settings.grid && <rect width="100%" height="100%" fill="url(#dots)" />}
+        {settings.grid && <rect className="board" width="100%" height="100%" fill="url(#board)" />}
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+        {settings.grid && cell && !link && <rect className="gcell" x={cell[0] * GRID} y={cell[1] * GRID} width={GRID} height={GRID} />}
 
         {wires.map((w, i) => {
           const a = byId[w.from], b = byId[w.to]
           if (!a || !b) return null
           const [x1, y1] = pinOut(a, w.fp || 0), [x2, y2] = pinIn(b, w.pin), dd = wirePath(x1, y1, x2, y2, settings.wires)
-          const cls = `wire${S.outs(w.from)[w.fp || 0] ? ' hi' : ''}${(OW(a)[w.fp || 0] || 1) > 1 ? ' bus' : ''}`
+          const on = !!S.outs(w.from)[w.fp || 0]
+          const cls = `wire${on ? ' hi' : ''}${(OW(a)[w.fp || 0] || 1) > 1 ? ' bus' : ''}`
           const del = (e) => {
             e.stopPropagation()
             if (tool === 'erase' || holdD.current) { mark(); update((k) => ({ ...k, wires: k.wires.filter((_, j) => j !== i) })) }
@@ -367,6 +391,7 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
             <g key={i}>
               <path className="wirehit" d={dd} onPointerDown={del} />
               <path className={cls} d={dd} />
+              {on && <path className="wire pulse" d={dd} />}
             </g>
           )
         })}
@@ -376,9 +401,10 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
           const v = OUTS(c).length ? o[0] : ins[0]
           return (
             <g key={c.id} transform={`translate(${c.x} ${c.y})`} onPointerDown={(e) => onPartDown(e, c)}
-              className={`part ${sels.includes(c.id) ? 'sel' : ''}`}>
+              className={`part ${sels.includes(c.id) ? 'sel' : ''}`}
+              onDoubleClick={() => { if (c.type === 'SCREEN' && tool !== 'erase') openScreen(c.id) }}>
               {frame(c, d, w, h, v)}
-              {body(c, d, w, h, ins, v)}
+              {body(c, d, w, h, ins, v, openScreen)}
               {d.neg && <circle cx={w + 5} cy={h / 2} r="5" />}
               {d.seq && d.clk != null && <path className="mark" d={`M0 ${pinIn(c, d.clk)[1] - c.y - 6}L9 ${pinIn(c, d.clk)[1] - c.y}L0 ${pinIn(c, d.clk)[1] - c.y + 6}`} />}
               {settings.pinLabels && INS(c).map((l, i) => l && !(d.seq && i === d.clk) && <text key={'i' + i} x="6" y={pinIn(c, i)[1] - c.y + 4} className="pl">{l}</text>)}
@@ -395,7 +421,7 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
             ))}
             {OUTS(c).map((_, k) => (
               <circle key={'o' + k} cx={pinOut(c, k)[0]} cy={pinOut(c, k)[1]} r="5"
-                className="pin" onPointerDown={(e) => onPin(e, c, 'out', k)} />
+                className={`pin${fan[c.id + ':' + k] > 1 ? ' fan' : ''}`} onPointerDown={(e) => onPin(e, c, 'out', k)} />
             ))}
           </g>
         ))}
@@ -422,7 +448,7 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
         <button type="button" className={running ? 'on' : ''} disabled={!hasClk} title={hasClk ? '' : 'Add a clock part first'}
           onClick={() => setRunning(!running)}>{running ? 'Pause' : 'Run'}</button>
         <select value={hz} onChange={(e) => setHz(+e.target.value)} aria-label="Clock speed">
-          {[1, 2, 5, 10, 20].map((h) => <option key={h} value={h}>{h} Hz</option>)}
+          {HZ.map((h) => <option key={h} value={h}>{h} Hz</option>)}
         </select>
         <button type="button" onClick={fit}>Fit view</button>
         <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">Undo</button>
@@ -457,7 +483,13 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
           )}
           {cd.n !== undefined && (
             <label>{cd.nlabel}
-              <input type="number" min={cd.nmin ?? 1} max={cd.nmax ?? 16} value={NN(cur)} onChange={num('n', cd.nmin ?? 1, cd.nmax ?? 16)} />
+              <input type="number" min={cd.nmin ?? 1} max={cd.nmax ?? 16} value={NN(cur)}
+                onChange={cur.type === 'SCREEN' ? (e) => resize(cur, clamp(+e.target.value || 1, 1, SMAX), SH(cur)) : num('n', cd.nmin ?? 1, cd.nmax ?? 16)} />
+            </label>
+          )}
+          {cd.n2 !== undefined && (
+            <label>{cd.n2label}
+              <input type="number" min="1" max={cd.nmax} value={SH(cur)} onChange={(e) => resize(cur, SW(cur), clamp(+e.target.value || 1, 1, SMAX))} />
             </label>
           )}
           {cd.attr && (
@@ -467,6 +499,7 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
           )}
           <p>Position <span>{cur.x}, {cur.y}</span></p>
           <p>{OUTS(cur).length ? 'Outputs' : 'Inputs'} <span>{vals.map((v) => (v == null ? 'Z' : v.toString(16))).join(' ') || '-'}</span></p>
+          {cur.type === 'SCREEN' && <button type="button" className="primary" onClick={() => openScreen(cur.id)}>Open screen</button>}
           <button type="button" onClick={() => removeMany([cur.id])}>Delete</button>
         </aside>
       )}
@@ -475,7 +508,7 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
 }
 
 /* ================= Modal + its contents ================= */
-function Modal({ title, onClose, children }) {
+function Modal({ title, onClose, children, wide }) {
   useEffect(() => {
     // capture phase, so Esc closes the modal without also resetting the tool
     const k = (e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose() } }
@@ -484,7 +517,7 @@ function Modal({ title, onClose, children }) {
   }, [onClose])
   return (
     <div className="overlay" onPointerDown={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={title} onPointerDown={(e) => e.stopPropagation()}>
+      <div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title} onPointerDown={(e) => e.stopPropagation()}>
         <header>
           <h3>{title}</h3>
           <button type="button" className="x" aria-label="Close" onClick={onClose}><X size={18} /></button>
@@ -527,7 +560,7 @@ const CATALOG = [
   ] },
   { label: 'Input/Output', items: [
     T('Button', 'BTN', 'btn'), T('Joystick', 'JOY', 'joy'), T('Keyboard', 'KEYB', 'key'), T('LED', 'LED', 'led'),
-    T('7-Segment Display', 'SEG7', '7seg'), T('Hex Digit Display', 'HEX', 'hex'), T('LED Matrix', 'MATRIX', 'mat'), T('TTY', 'TTY', 'tty'),
+    T('7-Segment Display', 'SEG7', '7seg'), T('Hex Digit Display', 'HEX', 'hex'), T('LED Matrix', 'MATRIX', 'mat'), T('LED Screen', 'SCREEN', 'scr'), T('TTY', 'TTY', 'tty'),
   ] },
 ]
 
@@ -707,6 +740,7 @@ const NAV = [
   { label: 'Build', items: [
     { id: 'tools', name: 'Parts & tools', icon: Wrench },
     { id: 'examples', name: 'Examples', icon: Library },
+    { id: 'screen', name: 'LED screen', icon: Monitor },
   ] },
   // Hardware lab: placeholders for the Arduino / breadboard work that is coming later.
   { label: 'Hardware lab', items: [
@@ -752,6 +786,7 @@ export default function Dashboard() {
   const [code, setCode] = useState(() => gen(START))
   const [err, setErr] = useState('')
   const [fitKey, setFitKey] = useState(0)
+  const [screenId, setScreenId] = useState(null) // the LED screen open in the big view
   const [layout, setLayout] = useState(readLayout)
   const [drag, setDrag] = useState(null) // the tab being dragged
   const [zone, setZone] = useState(null) // where it would land
@@ -847,7 +882,7 @@ export default function Dashboard() {
     setCircuit(settle({ parts: r.parts, wires: r.wires }))
   }
   const onCode = (text) => { mark(true); applyCode(text) }
-  const load = (text) => { mark(); applyCode(text, true); close(); setTab('Editor'); setFitKey((k) => k + 1) }
+  const load = (text) => { mark(); applyCode(text, true); close(); setScreenId(null); setTab('Editor'); setFitKey((k) => k + 1) }
 
   /* ---- saved data: settings and the latest circuit follow the account ---- */
   useEffect(() => {
@@ -894,6 +929,7 @@ export default function Dashboard() {
       return load('')
     }
     if (id === 'export') return exportCode()
+    if (id === 'screen') { setTool('SCREEN'); setTab('Editor'); return setNote('Click the canvas to place an LED screen. Double-click it to open the paint view.') }
     setModal(id)
   }
 
@@ -979,13 +1015,19 @@ export default function Dashboard() {
           )}
           {pane('Editor', (
             <Circuit circuit={circuit} update={update} tool={tool} setTool={setTool} fitKey={fitKey} settings={settings}
-              mark={mark} undo={undo} redo={redo} canUndo={hv.u > 0} canRedo={hv.r > 0} />
+              mark={mark} undo={undo} redo={redo} canUndo={hv.u > 0} canRedo={hv.r > 0} openScreen={setScreenId} />
           ))}
           {drag && <div className={`drop-preview ${zone || ''}`} aria-hidden="true" />}
         </div>
       </main>
 
       {note && <div className="toast" role="status">{note}</div>}
+      {screenId && circuit.parts.some((p) => p.id === screenId && p.type === 'SCREEN') && (
+        <Modal title={`LED screen · ${screenId}`} wide onClose={() => setScreenId(null)}>
+          <ScreenStudio c={circuit.parts.find((p) => p.id === screenId)}
+            onChange={(o) => update((m) => ({ ...m, parts: m.parts.map((p) => (p.id === screenId ? { ...p, ...o } : p)) }))} />
+        </Modal>
+      )}
       {modal === 'tools' && (
         <Modal title="Parts & tools" onClose={close}>
           <ToolPicker tool={tool} onPick={(t) => { setTool(t); close(); setTab('Editor') }} />
