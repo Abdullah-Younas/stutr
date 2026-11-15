@@ -167,7 +167,11 @@ html.lenis, html.lenis body { height: auto; }
 .tier h2 { margin: 0 0 6px; font-size: 1.5rem; }
 .tier p { margin: 0; }
 .tier .who { min-height: 2.9em; color: var(--dim); font-size: 0.98rem; line-height: 1.45; }
-.tier .price { margin-top: 16px; font: 700 3.4rem/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.03em; }
+.tier .was { display: flex; align-items: center; gap: 10px; margin-top: 16px; min-height: 1.4rem; color: var(--dim); font: 500 1.05rem "JetBrains Mono", monospace; }
+.tier .was s { text-decoration-color: var(--hot); text-decoration-thickness: 2px; }
+.tier .launch { padding: 2px 9px; border-radius: 999px; background: #ff547026; color: #ff8a9d; font: 700 0.72rem "JetBrains Mono", monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tier .price { margin-top: 6px; font: 700 3.4rem/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.03em; }
 .tier .unit { margin-top: 6px; color: var(--dim); font: 500 0.85rem "JetBrains Mono", monospace; }
 .tier .tier-tag { display: inline-block; margin-top: 12px; padding: 4px 12px; border: 1px dashed #3be0ff66; border-radius: 999px; color: var(--gold); font: 500 0.8rem "JetBrains Mono", monospace; }
 .tier ul { flex: 1; margin: 22px 0 28px; padding: 0; list-style: none; display: grid; align-content: start; gap: 12px; }

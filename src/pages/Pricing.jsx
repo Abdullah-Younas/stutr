@@ -5,6 +5,9 @@ import { usePageMeta } from '../lib/meta'
 import Nav from '../landing/Nav'
 import '../landing.css'
 
+// LAUNCH PRICING: the struck-through "regular" prices are what these plans will cost after launch. Only show them
+// if you really will raise prices (set LAUNCH_END to the date). A "was" price the product never charged is illegal in many places.
+const LAUNCH_END = '' // e.g. 'Dec 31'. Leave empty until you pick a date
 // Change prices here. Ranges from the plan were pinned to one number each: Pro $8/mo or $69/yr, Student about half of that,
 // Classroom a flat yearly fee, Founder a one-time payment.
 const TIERS = [
@@ -14,15 +17,15 @@ const TIERS = [
     cta: { label: 'Start free', to: '/start' },
   },
   {
-    name: 'Pro', who: 'Serious individual builders', month: '$8', year: '$69', featured: true, badge: 'Most popular',
+    name: 'Pro', who: 'Serious individual builders', month: '$8', year: '$69', regMonth: '$12', regYear: '$99', featured: true, badge: 'Most popular',
     features: ['Everything in Free', 'Cloud save and multi-device sync', 'Unlimited projects and complexity', 'Advanced components and subcircuits', 'Export: PNG, netlist, and HDL later', 'History and versioning', 'Early access to Hardware Lab', 'Themes'],
   },
   {
-    name: 'Student', who: 'Students with a .edu address', month: '$4', year: '$39', tag: 'About 50% off Pro',
+    name: 'Student', who: 'Students with a .edu address', month: '$4', year: '$39', regMonth: '$6', regYear: '$59', tag: 'About 50% off Pro',
     features: ['Everything in Pro', 'Verified with your .edu email'],
   },
   {
-    name: 'Classroom', who: 'Teachers, schools and universities', price: '$149', unit: 'per year for up to 30 students', tag: '$299 per year for up to 50', wide: true,
+    name: 'Classroom', who: 'Teachers, schools and universities', price: '$149', reg: '$229', unit: 'per year for up to 30 students', tag: '$299 for up to 50 students (regular $449)', wide: true,
     features: ['Everything in Pro for every student', 'Assignment tools', 'Student sharing and progress', 'Class management', 'Bulk accounts'],
   },
   {
@@ -40,6 +43,9 @@ export default function Pricing() {
       <div className="tier-head">
         <h2>{t.name}</h2>
         <p className="who">{t.who}</p>
+        {(t.reg ?? (yearly ? t.regYear : t.regMonth)) && (
+          <p className="was"><span className="sr">Regular price </span><s>{t.reg ?? (yearly ? t.regYear : t.regMonth)}</s><span className="launch">Launch price</span></p>
+        )}
         <p className="price">{t.price ?? (yearly ? t.year : t.month)}</p>
         <p className="unit">{t.unit ?? (yearly ? 'per year' : 'per month')}</p>
         {t.tag && <p className="tier-tag">{t.tag}</p>}
@@ -62,6 +68,7 @@ export default function Pricing() {
         </div>
         <div className="tiers">{TIERS.filter((t) => !t.wide).map(card)}</div>
         <div className="tiers-wide">{TIERS.filter((t) => t.wide).map(card)}</div>
+        <p className="pr-note">Launch prices are lower than the regular prices shown crossed out{LAUNCH_END ? ` and end ${LAUNCH_END}` : ', and the regular prices will apply after launch'}. </p>
         <p className="pr-note">Paid plans are not open yet. Cloud sync, history, subcircuits, class tools and Hardware Lab are still being built, so what is listed for them is the plan, not what ships today.</p>
         <p><Link to="/start" className="ghost-link">Start building for free in the meantime</Link></p>
       </main>
