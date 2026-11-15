@@ -16,7 +16,7 @@
   background: rgba(11, 18, 38, 0.82); backdrop-filter: blur(10px); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
 }
 .DashBG .brand { height: 58px; padding: 0 16px; border-bottom: 1px dashed rgba(255, 255, 255, 0.15); }
-.DashBG .brand-logo { width: 30px; height: 30px; border-radius: 9px; font: 700 15px "JetBrains Mono", monospace; background: var(--ac); box-shadow: 0 0 0 4px rgba(61, 107, 255, 0.18); }
+.DashBG .brand-logo { display: block; width: 30px; height: 30px; border-radius: 9px; object-fit: cover; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 0 5px rgba(61, 107, 255, 0.18); }
 .DashBG .brand-name { font: 700 17px "JetBrains Mono", monospace; }
 .DashBG .search { height: 36px; margin: 12px 12px 4px; border-radius: 12px; }
 .DashBG .group { padding: 12px 10px 2px; }

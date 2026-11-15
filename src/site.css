@@ -17,7 +17,7 @@ main:focus { outline: none; }
 .site-head a, .site-foot a, .site-foot button, .entry-links a, .entry-links button { color: var(--muted); text-decoration: none; }
 .site-head a:hover, .site-foot a:hover, .site-foot button:hover, .entry-links a:hover, .entry-links button:hover { color: #fff; text-decoration: underline; }
 .site-logo { display: flex; align-items: center; gap: 10px; color: #fff !important; font: 700 1.2rem monospace; }
-.site-logo span { display: grid; place-items: center; width: 32px; height: 32px; color: #141414; background: #fff; border-radius: 8px; }
+.site-logo img { display: block; width: 32px; height: 32px; border-radius: 8px; }
 .cta-sm { padding: 8px 14px; color: #000 !important; background: #fff; border-radius: 999px; font-weight: 600; }
 .cta-sm:hover { text-decoration: none !important; background: #e6e6e6; }
 .site-main { flex: 1; width: 100%; box-sizing: border-box; margin: 0 auto; padding: 24px clamp(16px, 4vw, 40px) 56px; line-height: 1.65; }

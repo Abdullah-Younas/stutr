@@ -937,7 +937,7 @@ export default function Dashboard() {
     <div className="DashBG">
       <aside className={`Tree${drawer ? ' open' : ''}`} aria-label="Menu">
         <button className="brand" type="button" aria-label="Stutr home" onClick={() => navigate('/')}>
-          <span className="brand-logo" aria-hidden="true">S</span>
+          <img className="brand-logo" src="/logo.png" alt="" width="30" height="30" />
           <span className="brand-name">Stutr</span>
         </button>
 

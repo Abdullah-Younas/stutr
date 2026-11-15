@@ -13,7 +13,7 @@ function Entry() {
     <div className="gate">
       <Squares />
       <main id="main" tabIndex={-1} className="gate-main">
-        <Link to="/" className="lp-logo" aria-label="Back to the Stutr home page"><b aria-hidden="true">S</b>Stutr</Link>
+        <Link to="/" className="lp-logo" aria-label="Back to the Stutr home page"><img src="/logo.png" alt="" width="34" height="34" />Stutr</Link>
         <h1>Where circuits come alive</h1>
         <p className="gate-lede">A code-based Logisim alternative. Write logic, not wires.</p>
         <p className="gate-code mono"><Decrypt text="Y = xor(A, B)" delay={400} /></p>

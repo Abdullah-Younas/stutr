@@ -11,7 +11,7 @@ export const ROUTES = [
   { path: '/start', title: 'Get started - Stutr', index: false,
     description: 'Open the Stutr editor and start building a digital circuit from code.' },
   { path: '/pricing', title: 'Pricing - Stutr', index: false,
-    description: 'Stutr pricing is coming soon. Plans and details will be posted here.' }, // set index: true when pricing is final
+    description: 'Stutr plans: Free, Pro, Student, Classroom and a one-time Founder offer. Free is enough to learn and build circuits.' }, // set index: true once paid plans can be bought
   { path: '/login', title: 'Sign in - Stutr', index: false,
     description: 'Sign in to Stutr with GitHub or Google to save your circuits.' },
   { path: '/app', title: 'Editor - Stutr', index: false,

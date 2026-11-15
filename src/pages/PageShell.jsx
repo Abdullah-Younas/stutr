@@ -17,7 +17,7 @@ export default function PageShell({ path, children, narrow = true }) {
   return (
     <div className="site">
       <header className="site-head">
-        <Link to="/" className="site-logo"><span aria-hidden="true">S</span> Stutr</Link>
+        <Link to="/" className="site-logo"><img src="/logo.png" alt="" width="32" height="32" /> Stutr</Link>
         <nav aria-label="Main">
           <Link to="/faq">FAQ</Link>
           <Link to="/app" className="cta-sm">Start building</Link>

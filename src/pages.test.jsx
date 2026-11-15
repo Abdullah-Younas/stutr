@@ -20,6 +20,15 @@ describe('public pages', () => {
       for (const img of out.match(/<img[^>]*>/g) || []) expect(img).toMatch(/alt="/)
     })
   }
+  it('pricing lists the five plans, yearly prices first, and only Free can be started', () => {
+    const out = html(Pricing)
+    for (const n of ['Free', 'Pro', 'Student', 'Classroom', 'Founder']) expect(out).toContain(`aria-label="${n} plan"`)
+    expect(out).toContain('$69')
+    expect(out).toContain('$39')
+    expect(out).toContain('$99')
+    expect(out).toContain('href="/start"')
+    expect((out.match(/disabled/g) || []).length).toBe(4)
+  })
   it('home page has a clear call to action and links to the legal pages', () => {
     const out = html(Landing)
     expect(out).toContain('Start Building')
