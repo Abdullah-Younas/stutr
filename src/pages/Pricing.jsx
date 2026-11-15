@@ -14,7 +14,7 @@ const TIERS = [
     cta: { label: 'Start free', to: '/start' },
   },
   {
-    name: 'Pro', who: 'Serious individual builders', month: '$8', year: '$69', featured: true,
+    name: 'Pro', who: 'Serious individual builders', month: '$8', year: '$69', featured: true, badge: 'Most popular',
     features: ['Everything in Free', 'Cloud save and multi-device sync', 'Unlimited projects and complexity', 'Advanced components and subcircuits', 'Export: PNG, netlist, and HDL later', 'History and versioning', 'Early access to Hardware Lab', 'Themes'],
   },
   {
@@ -22,11 +22,11 @@ const TIERS = [
     features: ['Everything in Pro', 'Verified with your .edu email'],
   },
   {
-    name: 'Classroom', who: 'Teachers, schools and universities', price: '$149', unit: 'per year, up to 30 students', tag: '$299 per year for up to 50',
+    name: 'Classroom', who: 'Teachers, schools and universities', price: '$149', unit: 'per year for up to 30 students', tag: '$299 per year for up to 50', wide: true,
     features: ['Everything in Pro for every student', 'Assignment tools', 'Student sharing and progress', 'Class management', 'Bulk accounts'],
   },
   {
-    name: 'Founder', who: 'Early supporters', price: '$99', unit: 'one time', tag: 'Early launch offer',
+    name: 'Founder', who: 'Early supporters', price: '$99', unit: 'one-time payment', tag: 'Early launch offer', wide: true,
     features: ['Pro, forever', 'Early access to Hardware Lab', 'Helps fund the launch'],
   },
 ]
@@ -34,6 +34,22 @@ const TIERS = [
 export default function Pricing() {
   usePageMeta('/pricing')
   const [yearly, setYearly] = useState(true)
+  const card = (t) => (
+    <section key={t.name} className={`tier${t.featured ? ' featured' : ''}${t.wide ? ' wide' : ''}`} aria-label={`${t.name} plan`}>
+      {t.badge && <span className="tier-badge">{t.badge}</span>}
+      <div className="tier-head">
+        <h2>{t.name}</h2>
+        <p className="who">{t.who}</p>
+        <p className="price">{t.price ?? (yearly ? t.year : t.month)}</p>
+        <p className="unit">{t.unit ?? (yearly ? 'per year' : 'per month')}</p>
+        {t.tag && <p className="tier-tag">{t.tag}</p>}
+      </div>
+      <ul>{t.features.map((f) => <li key={f}>{f}</li>)}</ul>
+      {t.cta
+        ? <Link to={t.cta.to} className="tier-btn go">{t.cta.label}</Link>
+        : <button type="button" className="tier-btn" disabled>Coming soon</button>}
+    </section>
+  )
   return (
     <div className="lp pricing">
       <Nav />
@@ -44,20 +60,8 @@ export default function Pricing() {
           <button type="button" aria-pressed={!yearly} onClick={() => setYearly(false)}>Monthly</button>
           <button type="button" aria-pressed={yearly} onClick={() => setYearly(true)}>Yearly</button>
         </div>
-        <div className="tiers">
-          {TIERS.map((t) => (
-            <section key={t.name} className={`tier${t.featured ? ' featured' : ''}`} aria-label={`${t.name} plan`}>
-              <h2>{t.name}</h2>
-              <p className="who">{t.who}</p>
-              <p className="price">{t.price ?? (yearly ? t.year : t.month)}<span className="unit"> {t.unit ?? (yearly ? 'per year' : 'per month')}</span></p>
-              {t.tag && <p className="tier-tag">{t.tag}</p>}
-              <ul>{t.features.map((f) => <li key={f}>{f}</li>)}</ul>
-              {t.cta
-                ? <Link to={t.cta.to} className="tier-btn go">{t.cta.label}</Link>
-                : <button type="button" className="tier-btn" disabled>Coming soon</button>}
-            </section>
-          ))}
-        </div>
+        <div className="tiers">{TIERS.filter((t) => !t.wide).map(card)}</div>
+        <div className="tiers-wide">{TIERS.filter((t) => t.wide).map(card)}</div>
         <p className="pr-note">Paid plans are not open yet. Cloud sync, history, subcircuits, class tools and Hardware Lab are still being built, so what is listed for them is the plan, not what ships today.</p>
         <p><Link to="/start" className="ghost-link">Start building for free in the meantime</Link></p>
       </main>
