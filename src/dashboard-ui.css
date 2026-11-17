@@ -113,7 +113,7 @@
 
 /* LED screen part */
 .DashBG .part rect.scr-bezel { fill: #0a1020; stroke: #2a3a73; stroke-width: 2; }
-.DashBG .part .scr-img { image-rendering: auto; }
+.DashBG .part .scr-img { image-rendering: pixelated; }
 .DashBG .part text.scr-size { fill: #6f80ad; font: 500 10px "JetBrains Mono", monospace; }
 .DashBG .part .scr-open { cursor: pointer; }
 .DashBG .part .scr-open rect { fill: #0b1226; stroke: #3be0ff; stroke-width: 1.4; }

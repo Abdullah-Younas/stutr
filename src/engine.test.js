@@ -115,12 +115,17 @@ describe('LED screen', () => {
     expect(big.errs).toEqual([])
     expect(buf(big.parts[0]).px.length).toBe(640000)
   })
-  it('small screens draw square pixels, not circles', () => {
-    const calls = []
-    const ctx = { fillRect: (...a) => calls.push(['rect', ...a]), arc: () => calls.push(['arc']), beginPath() {}, fill() {}, set fillStyle(v) {} }
+  it('every pixel is a solid block with no gaps, like a monitor', () => {
+    let drawn
+    const ctx = { createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4), w, h }), putImageData: (img) => { drawn = img } }
     const cv = { width: 0, height: 0, getContext: () => ctx }
     draw(cv, new Uint16Array(4).fill(1), 2, 2, lutFor(1, '#ff0000'))
-    expect(calls.some((c) => c[0] === 'arc')).toBe(false)
-    expect(calls.filter((c) => c[0] === 'rect').length).toBe(5) // background + 4 pixels
+    const out = new Uint32Array(drawn.data.buffer)
+    expect(cv.width).toBeGreaterThan(2) // scaled up so each pixel is a block
+    expect(out.length).toBe(cv.width * cv.height)
+    expect(out.every((v) => v === out[0])).toBe(true) // all lit: not one dark gap line anywhere
+    draw(cv, new Uint16Array([1, 0, 0, 1]), 2, 2, lutFor(1, '#ff0000'))
+    const s = cv.width / 2
+    expect(new Set(new Uint32Array(drawn.data.buffer).subarray(0, s)).size).toBe(1) // first block is one solid color
   })
 })

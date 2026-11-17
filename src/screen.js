@@ -2,8 +2,6 @@
 // preview on the canvas and the big paintable view, and it can be tested without a browser.
 import { blank } from './engine'
 
-export const DOT_MAX = 2304 // up to 48 x 48: draw each LED as a square with a thin gap. Bigger screens are drawn as a smooth pixel image
-const CELL = 8 // canvas pixels per LED in square-LED mode
 export const SIZES = [8, 16, 32, 64, 128, 256, 512, 800, 1024, 2048]
 export const DEPTHS = [[1, 'On / off'], [2, '4 levels'], [3, '8 colors'], [4, '16 colors'], [6, '64 colors'], [8, '256 colors'], [12, '4096 colors'], [16, '65k colors']]
 
@@ -51,33 +49,29 @@ export const quant = (bits, r, g, b) => {
 export const inkOf = (bits, hex) => (bits <= 2 ? (1 << bits) - 1 : quant(bits, ...rgb(hex)))
 
 /* ---- drawing the buffer onto a canvas ---- */
+// Every pixel is a solid square with no gap, like a monitor. Small screens are scaled up by a whole number
+// (so edges stay sharp); screens bigger than maxSide are sampled down.
 export const canvasSize = (w, h, maxSide) => {
-  if (w * h <= DOT_MAX) return [w * CELL, h * CELL]
-  const k = Math.min(1, maxSide / Math.max(w, h))
-  return [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))]
+  const big = Math.max(w, h)
+  if (big <= maxSide) { const s = Math.max(1, Math.min(8, Math.floor(384 / big), Math.floor(maxSide / big))); return [w * s, h * s, s] }
+  const k = maxSide / big
+  return [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)), 0]
 }
 
 export const draw = (canvas, px, w, h, lut, maxSide = 2048) => {
-  const [dw, dh] = canvasSize(w, h, maxSide)
+  const [dw, dh, s] = canvasSize(w, h, maxSide)
   if (canvas.width !== dw) canvas.width = dw
   if (canvas.height !== dh) canvas.height = dh
   const ctx = canvas.getContext('2d')
   if (!ctx) return
-  if (w * h <= DOT_MAX) {
-    ctx.fillStyle = '#0a1020'
-    ctx.fillRect(0, 0, dw, dh)
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const v = px[y * w + x]
-        ctx.fillStyle = v ? css(lut[v]) : '#16224a'
-        ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1) // square pixels with a hairline gap, like a real screen
-      }
-    }
-    return
-  }
   const img = ctx.createImageData(dw, dh), out = new Uint32Array(img.data.buffer)
-  if (dw === w && dh === h) for (let i = 0; i < out.length; i++) out[i] = lut[px[i]]
-  else {
+  if (s === 1) for (let i = 0; i < out.length; i++) out[i] = lut[px[i]]
+  else if (s > 1) {
+    for (let y = 0; y < dh; y++) {
+      const row = Math.floor(y / s) * w
+      for (let x = 0; x < dw; x++) out[y * dw + x] = lut[px[row + Math.floor(x / s)]]
+    }
+  } else {
     for (let y = 0; y < dh; y++) {
       const row = Math.floor((y * h) / dh) * w
       for (let x = 0; x < dw; x++) out[y * dw + x] = lut[px[row + Math.floor((x * w) / dw)]]

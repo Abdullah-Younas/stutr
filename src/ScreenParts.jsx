@@ -153,7 +153,7 @@ export function ScreenStudio({ c, onChange }) {
       </div>
 
       <div className="scr-stage">
-        <canvas ref={cv} className={`scr-canvas${w * h > 2304 ? ' px' : ''}`} style={style} aria-label={`LED screen, ${w} by ${h}. Click and drag to paint.`}
+        <canvas ref={cv} className="scr-canvas px" style={style} aria-label={`LED screen, ${w} by ${h}. Click and drag to paint.`}
           onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={() => { up(); setHover(null) }} />
       </div>
       <p className="scr-foot">
