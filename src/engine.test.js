@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buf, dims, gen, parse, settle, sim } from './engine'
-import { inkOf, lutFor, resized, stroke } from './screen'
+import { draw, inkOf, lutFor, resized, stroke } from './screen'
 import { EXAMPLES } from './examples'
 
 const load = (code) => {
@@ -114,5 +114,13 @@ describe('LED screen', () => {
     const big = parse('scr = screen<8>(None, None, None, None, None, None, width=800, height=800)')
     expect(big.errs).toEqual([])
     expect(buf(big.parts[0]).px.length).toBe(640000)
+  })
+  it('small screens draw square pixels, not circles', () => {
+    const calls = []
+    const ctx = { fillRect: (...a) => calls.push(['rect', ...a]), arc: () => calls.push(['arc']), beginPath() {}, fill() {}, set fillStyle(v) {} }
+    const cv = { width: 0, height: 0, getContext: () => ctx }
+    draw(cv, new Uint16Array(4).fill(1), 2, 2, lutFor(1, '#ff0000'))
+    expect(calls.some((c) => c[0] === 'arc')).toBe(false)
+    expect(calls.filter((c) => c[0] === 'rect').length).toBe(5) // background + 4 pixels
   })
 })

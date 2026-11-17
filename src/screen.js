@@ -2,8 +2,8 @@
 // preview on the canvas and the big paintable view, and it can be tested without a browser.
 import { blank } from './engine'
 
-export const DOT_MAX = 2304 // up to 48 x 48: draw round LEDs. Bigger screens are drawn as a smooth pixel image
-const CELL = 8 // canvas pixels per LED in round-LED mode
+export const DOT_MAX = 2304 // up to 48 x 48: draw each LED as a square with a thin gap. Bigger screens are drawn as a smooth pixel image
+const CELL = 8 // canvas pixels per LED in square-LED mode
 export const SIZES = [8, 16, 32, 64, 128, 256, 512, 800, 1024, 2048]
 export const DEPTHS = [[1, 'On / off'], [2, '4 levels'], [3, '8 colors'], [4, '16 colors'], [6, '64 colors'], [8, '256 colors'], [12, '4096 colors'], [16, '65k colors']]
 
@@ -70,9 +70,7 @@ export const draw = (canvas, px, w, h, lut, maxSide = 2048) => {
       for (let x = 0; x < w; x++) {
         const v = px[y * w + x]
         ctx.fillStyle = v ? css(lut[v]) : '#16224a'
-        ctx.beginPath()
-        ctx.arc(x * CELL + CELL / 2, y * CELL + CELL / 2, v ? 3.5 : 2.5, 0, Math.PI * 2)
-        ctx.fill()
+        ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1) // square pixels with a hairline gap, like a real screen
       }
     }
     return

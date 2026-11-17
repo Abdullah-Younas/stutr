@@ -18,7 +18,7 @@ function AuthProvider({ children }) {
     return () => data.subscription.unsubscribe()
   }, [])
 
-  const signIn = (provider) => supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/app` } })
+  const signIn = (provider) => supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}${sessionStorage.getItem('stutr-buy') ? '/pricing' : '/app'}` } })
   const signOut = async () => {
     await supabase?.auth.signOut()
     sessionStorage.removeItem(GUEST)

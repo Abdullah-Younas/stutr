@@ -152,7 +152,7 @@ const body = (c, d, w, h, ins, v, openScreen) => {
   }
   if (c.type === 'MATRIX') {
     return Array.from({ length: NN(c) }, (_, r) => Array.from({ length: W(c) }, (_, k) => (
-      <circle key={r + ':' + k} className={`dot${(ins[0] >> k) & 1 && (ins[1] >> r) & 1 ? ' on' : ''}`} cx={18 + k * 12} cy={18 + r * 12} r="4" />
+      <rect key={r + ':' + k} className={`dot${(ins[0] >> k) & 1 && (ins[1] >> r) & 1 ? ' on' : ''}`} x={12 + k * 12} y={12 + r * 12} width="11" height="11" />
     )))
   }
   if (c.type === 'TEXT') return <text x="8" y="19" className="mono">{TX(c)}</text>
@@ -172,6 +172,8 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
   const [cell, setCell] = useState(null) // the grid square under the pointer
   const [view, setView] = useState({ x: 0, y: 0, k: 1 })
   const pan = useRef(null)
+  const fingers = useRef(new Map()) // touches currently down, for pinch zoom
+  const pinch = useRef(null)
   const drag = useRef(null)
   const held = useRef(null)
   const holdD = useRef(false) // D held down = erase mode
@@ -213,6 +215,11 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
   const onWheel = (e) => {
     const [mx, my] = raw(e), k2 = clamp(view.k * (e.deltaY < 0 ? 1.1 : 1 / 1.1), 0.2, 2.5)
     setView({ k: k2, x: mx - (mx - view.x) * (k2 / view.k), y: my - (my - view.y) * (k2 / view.k) })
+  }
+  // zoom around the middle of the canvas (the + and - buttons)
+  const zoomBy = (f) => {
+    const r = svg.current.getBoundingClientRect(), mx = r.width / 2, my = r.height / 2
+    setView((v) => { const k2 = clamp(v.k * f, 0.2, 2.5); return { k: k2, x: mx - (mx - v.x) * (k2 / v.k), y: my - (my - v.y) * (k2 / v.k) } })
   }
   const patch = (id, o) => update((c) => ({ ...c, parts: c.parts.map((p) => (p.id === id ? { ...p, ...o } : p)) }))
   const removeMany = (ids) => {
@@ -335,6 +342,33 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
     const h = held.current
     if (h) { patch(h.id, h.joy ? { vx: undefined, vy: undefined } : { v: 0 }); held.current = null }
   }
+  // Two fingers: pinch to zoom and drag to pan. Runs first (capture), so a pinch never drags a part or draws a wire.
+  const onTouchCapture = (e) => {
+    if (e.pointerType !== 'touch') return
+    const F = fingers.current
+    if (e.type === 'pointerdown') {
+      F.set(e.pointerId, [e.clientX, e.clientY])
+      if (F.size === 2) {
+        release(e) // drop whatever one finger had started
+        const [a, b] = [...F.values()], r = svg.current.getBoundingClientRect()
+        pinch.current = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, mx: (a[0] + b[0]) / 2 - r.left, my: (a[1] + b[1]) / 2 - r.top, view }
+      }
+    } else if (e.type === 'pointermove') {
+      if (!F.has(e.pointerId)) return
+      F.set(e.pointerId, [e.clientX, e.clientY])
+      if (pinch.current && F.size >= 2) {
+        const [a, b] = [...F.values()], r = svg.current.getBoundingClientRect(), p = pinch.current
+        const k2 = clamp((p.view.k * Math.hypot(a[0] - b[0], a[1] - b[1])) / p.d, 0.2, 2.5)
+        const mx = (a[0] + b[0]) / 2 - r.left, my = (a[1] + b[1]) / 2 - r.top
+        // the spot of the circuit that was between the fingers stays between the fingers
+        setView({ k: k2, x: mx - ((p.mx - p.view.x) / p.view.k) * k2, y: my - ((p.my - p.view.y) / p.view.k) * k2 })
+      }
+    } else {
+      F.delete(e.pointerId)
+      if (F.size < 2 && pinch.current) { e.stopPropagation(); pinch.current = null; return }
+    }
+    if (pinch.current) e.stopPropagation()
+  }
   // drag from a pin to another pin (output to input, or input to output) to wire two parts
   const onPin = (e, c, i, k = 0) => {
     e.stopPropagation()
@@ -367,7 +401,8 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
 
   return (
     <div className={`circuit tool-${tool}${hold ? ' erasing' : ''}`}>
-      <svg ref={svg} role="img" aria-label="Circuit canvas. The Code tab is the keyboard-friendly text version of this circuit." onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={(e) => { release(e); setCell(null) }} onWheel={onWheel}>
+      <svg ref={svg} role="img" aria-label="Circuit canvas. The Code tab is the keyboard-friendly text version of this circuit." onPointerDownCapture={onTouchCapture} onPointerMoveCapture={onTouchCapture} onPointerUpCapture={onTouchCapture} onPointerCancelCapture={onTouchCapture} onPointerCancel={release}
+        onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={release} onPointerLeave={(e) => { release(e); setCell(null) }} onWheel={onWheel}>
         <defs>
           <pattern id="board" width={GRID} height={GRID} patternUnits="userSpaceOnUse" patternTransform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
             <path className="gl" d={`M${GRID} 0H0V${GRID}`} />
@@ -451,6 +486,8 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
           {HZ.map((h) => <option key={h} value={h}>{h} Hz</option>)}
         </select>
         <button type="button" onClick={fit}>Fit view</button>
+        <button type="button" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out" title="Zoom out">−</button>
+        <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoom in" title="Zoom in">+</button>
         <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">Undo</button>
         <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)">Redo</button>
       </div>
@@ -654,7 +691,7 @@ const DOCS = [
 const SHORTCUTS = [
   ['P', 'Poke'], ['E', 'Edit (move parts)'], ['S', 'Select (box)'], ['X', 'Erase tool'], ['T / M / L', 'Text / Menu / Label'],
   ['Hold D', 'Erase while held: click a wire or part'], ['Delete', 'Remove the selection'], ['Esc', 'Back to Poke'],
-  ['Ctrl+Z', 'Undo'], ['Ctrl+Y / Ctrl+Shift+Z', 'Redo'], ['Wheel / drag empty space', 'Zoom / pan'],
+  ['Ctrl+Z', 'Undo'], ['Ctrl+Y / Ctrl+Shift+Z', 'Redo'], ['Wheel / drag empty space', 'Zoom / pan'], ['Two fingers', 'Pinch to zoom (touch)'],
 ]
 
 function SettingsModal({ settings, setSettings, user, store, onNote, onSignOut }) {

@@ -153,4 +153,15 @@ describe('menu, projects and new circuit', () => {
     fireEvent.pointerDown(q('.scr-open')[0])
     expect(screen.getByRole('dialog', { name: /LED screen/ })).toBeTruthy()
   })
+
+  it('two fingers pinch to zoom the circuit', () => {
+    mount()
+    const svg = document.querySelector('.circuit svg'), scale = () => +/scale\(([\d.]+)\)/.exec(svg.querySelector('g[transform]').getAttribute('transform'))[1]
+    const t = (type, id, x) => fireEvent(svg, new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: 100, bubbles: true }))
+    const before = scale()
+    t('pointerdown', 1, 100); t('pointerdown', 2, 200)
+    t('pointermove', 2, 300) // fingers move apart: zoom in
+    expect(scale()).toBeGreaterThan(before)
+    t('pointerup', 1, 100); t('pointerup', 2, 300)
+  })
 })

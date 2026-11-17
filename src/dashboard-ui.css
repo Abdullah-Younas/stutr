@@ -71,7 +71,7 @@
 .DashBG .ctx { border-radius: 12px; }
 
 /* ---------- parts: the gates, switches and LEDs from the landing page ---------- */
-.DashBG .part rect:not(.hit):not(.note), .DashBG .part circle { fill: #14204a; stroke: #9fb0d6; stroke-width: 2.2; transition: fill 0.2s, stroke 0.2s, filter 0.2s; }
+.DashBG .part :where(rect:not(.hit):not(.note), circle) { fill: #14204a; stroke: #9fb0d6; stroke-width: 2.2; transition: fill 0.2s, stroke 0.2s, filter 0.2s; }
 .DashBG .part rect.hit { fill: transparent; stroke: none; }
 .DashBG .part rect.note { fill: transparent; stroke: #3b4d85; stroke-dasharray: 4 3; }
 .DashBG .part .shape { fill: #14204a; stroke: #eef3ff; stroke-width: 2.5; stroke-linejoin: round; transition: fill 0.2s, stroke 0.2s, filter 0.2s; }
@@ -91,13 +91,13 @@
 .DashBG .part rect.key.on { fill: #3be0ff; stroke: #3be0ff; }
 .DashBG .part rect.seg { fill: #16224a; stroke: none; }
 .DashBG .part rect.seg.on { fill: #ff5470; filter: drop-shadow(0 0 5px #ff5470); }
-.DashBG .part circle.dot { fill: #16224a; stroke: none; }
-.DashBG .part circle.dot.on { fill: #ff5470; filter: drop-shadow(0 0 5px #ff5470); }
+.DashBG .part rect.dot { fill: #16224a; stroke: none; }
+.DashBG .part rect.dot.on { fill: #ff5470; filter: drop-shadow(0 0 4px rgba(255, 84, 112, 0.7)); }
 .DashBG .part circle.knob { fill: #ffb454; stroke: none; }
 .DashBG .part text { font-family: "JetBrains Mono", monospace; }
 .DashBG .part.sel .shape, .DashBG .part.sel .mark { stroke: #ffb454; }
-.DashBG .part.sel rect:not(.hit):not(.on):not(.led):not(.sw) { stroke: #ffb454; }
-.DashBG .part.sel rect.sw { stroke: #ffb454; }
+.DashBG .part.sel :where(rect:not(.hit)) { stroke: #ffb454; }
+.DashBG .part.sel rect.on, .DashBG .part.sel rect.led, .DashBG .part.sel rect.sw, .DashBG .part.sel rect.key { stroke: #ffb454; }
 
 /* wires: dim trace, bright when live, with a pulse running along it */
 .DashBG .wire { stroke: #2f4a86; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.25s; }

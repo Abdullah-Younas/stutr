@@ -189,6 +189,9 @@ a.tier-btn { display: block; text-align: center; text-decoration: none; }
 .tier.wide .price { margin-top: 12px; font-size: 3rem; }
 .tier.wide ul { margin: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
 .tier.wide .tier-btn { min-width: 170px; }
+.pr-thanks, .pr-err { max-width: 62ch; margin: 0 auto 22px; padding: 12px 18px; border-radius: 12px; text-align: center; }
+.pr-thanks { border: 1px solid #3be0ff66; background: #3be0ff14; color: #d8f6ff; }
+.pr-err { border: 1px solid #ff547099; background: #ff547014; color: #ffc4cd; }
 .pr-note { max-width: 66ch; margin: 0 auto 18px; color: var(--dim); font-size: 0.95rem; text-align: center; }
 .pricing .ghost-link { display: block; text-align: center; }
 
