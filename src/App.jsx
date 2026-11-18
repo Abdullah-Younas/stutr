@@ -10,6 +10,7 @@ const AuthLayout = lazy(() => import('./lib/auth').then((m) => ({ default: m.Aut
 const Login = lazy(() => import('./pages/Login'))
 const AppRoute = lazy(() => import('./pages/AppRoute'))
 const Faq = lazy(() => import('./pages/Faq'))
+const Docs = lazy(() => import('./pages/Docs'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -40,6 +41,8 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/app" element={<AppRoute />} />
           </Route>
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/docs/:slug" element={<Docs />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

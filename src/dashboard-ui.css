@@ -179,3 +179,28 @@
   .DashBG .wire.pulse { animation: none; }
   .DashBG .part .kn-g { transition: none; }
 }
+
+/* ---------- profile and plan ---------- */
+.DashBG .account .who { flex: 1; min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; background: none; border: 0; cursor: pointer; font: inherit; }
+.DashBG .avatar.big { width: 46px; height: 46px; font-size: 19px; background: var(--ac); border-color: transparent; color: #fff; }
+.profile { display: flex; flex-direction: column; gap: 16px; }
+.profile-id { display: flex; align-items: center; gap: 14px; }
+.profile-id strong { display: block; font-size: 1.05rem; }
+.profile-id small { color: var(--tx2); }
+.plan-card { padding: 18px 20px; border: 1px solid var(--ln); border-radius: 16px; background: var(--s2); }
+.plan-card h4 { margin: 10px 0 4px; font-size: 1.15rem; }
+.plan-card p { margin: 4px 0; color: var(--tx2); }
+.plan-card .plan-meta { font: 500 12px "JetBrains Mono", monospace; color: var(--tx3); }
+.plan-badge { display: inline-block; padding: 3px 12px; border-radius: 999px; font: 700 11px "JetBrains Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx2); border: 1px dashed rgba(255, 255, 255, 0.3); }
+.plan-active, .plan-lifetime { border-color: rgba(59, 224, 255, 0.55); background: linear-gradient(180deg, rgba(20, 34, 80, 0.9), var(--s2)); }
+.plan-active .plan-badge, .plan-lifetime .plan-badge { color: var(--s0); background: var(--live); border: 0; }
+.plan-ending { border-color: rgba(255, 180, 84, 0.6); }
+.plan-ending .plan-badge { color: #ffb454; border-color: #ffb454; }
+.plan-problem { border-color: rgba(255, 84, 112, 0.7); }
+.plan-problem .plan-badge { color: #ff8a9d; border-color: #ff8a9d; }
+.plan-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.profile .plan-actions { margin-top: 0; }
+.plan-card .plan-actions { margin: 16px 0 4px; }
+.plan-actions .btn { text-decoration: none; }
+.plan-actions a.btn.primary, .plan-actions button.btn.primary { color: #fff; background: var(--ac); border-color: var(--ac); }
+.plan-err { padding: 10px 14px; color: #ffc4cd; background: rgba(255, 84, 112, 0.1); border: 1px solid rgba(255, 84, 112, 0.5); border-radius: 10px; }

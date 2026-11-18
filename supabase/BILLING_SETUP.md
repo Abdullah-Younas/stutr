@@ -64,3 +64,13 @@ and redeploy nothing else (secrets apply on the next call).
 2. **Function 1:** Edge Functions -> **Deploy a new function -> Via Editor**. Name: `polar-checkout`. Delete the sample code, paste ALL of `supabase/dashboard/polar-checkout.ts`, Deploy.
 3. **Function 2:** same, name `polar-webhook`, paste `supabase/dashboard/polar-webhook.ts`, Deploy. Then open the function's settings and turn **JWT verification OFF** (Polar has no Supabase login; the signature check protects it).
 4. The webhook URL for Polar is `https://bybfxmyknppcdfpzagmd.supabase.co/functions/v1/polar-webhook`.
+
+---
+
+## Profile page: "Manage plan and billing" (third function)
+The Profile and plan panel in the app shows each person's plan and a button that opens Polar's billing page (change plan, cancel, update card, invoices). It needs one more function and one more permission:
+
+1. **Polar access token:** open it (Settings -> Developers) and also allow **`customer_sessions:write`**. If the token was made without it, create a new one with both permissions and update the `POLAR_ACCESS_TOKEN` secret.
+2. **Deploy the function:** Edge Functions -> Deploy a new function -> Via Editor, name `polar-portal`, paste all of `supabase/dashboard/polar-portal.ts`. Leave JWT verification ON (unlike the webhook). With the CLI: `npx supabase functions deploy polar-portal`.
+3. **Test:** sign in as someone who has paid, open the menu -> Profile & plan. You should see the plan and renewal date, and **Manage plan and billing** should open Polar.
+4. If the Polar page does not offer "Change plan", check your Polar organization's subscription settings. A person who never paid has no billing account yet, so the button is hidden for them.

@@ -19,6 +19,7 @@ export default function PageShell({ path, children, narrow = true }) {
       <header className="site-head">
         <Link to="/" className="site-logo"><img src="/logo.png" alt="" width="32" height="32" /> Stutr</Link>
         <nav aria-label="Main">
+          <Link to="/docs">Docs</Link>
           <Link to="/faq">FAQ</Link>
           <Link to="/app" className="cta-sm">Start building</Link>
         </nav>

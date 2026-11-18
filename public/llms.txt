@@ -1,0 +1,32 @@
+# Stutr
+
+> Stutr is a code-based digital logic circuit simulator that runs in the browser. Build circuits by typing short lines of code or by dragging parts onto a canvas; both views stay in sync and the circuit runs live. It has gates, buses, flip-flops, counters, RAM and ROM, a 4-bit CPU example, and an LED screen part up to 2048 by 2048 pixels.
+
+Stutr is an alternative to Logisim with a text language. The documentation below is complete and is also available as one file at https://stutr.nuxply.com/llms-full.txt.
+
+## Documentation
+
+- [Stutr documentation](https://stutr.nuxply.com/docs/index.md): Learn Stutr, the code-based circuit simulator: how it works, a five-minute start, and links to the language, editor, parts and LED screen guides.
+- [The circuit language](https://stutr.nuxply.com/docs/language.md): The Stutr circuit language: one line per part, how to wire inputs, set bit widths and settings, use numbers and comments, and fix errors.
+- [The editor](https://stutr.nuxply.com/docs/editor.md): How to use the Stutr editor: the Code and Editor panes, the run bar, every tool, keyboard shortcuts, zoom and pan, the part panel, menus and settings.
+- [Parts reference](https://stutr.nuxply.com/docs/parts.md): Every Stutr part: wiring, gates, plexers, arithmetic, memory, input and output. Pins, default width, settings, code name and a working example for each.
+- [LED screen guide](https://stutr.nuxply.com/docs/led-screen.md): Build Stutr LED screens from 1 by 1 to 2048 by 2048 pixels: draw from a circuit, paint by hand, import pictures, choose colors, and use the LED matrix.
+- [Examples](https://stutr.nuxply.com/docs/examples.md): Ready-made Stutr circuits you can open and run: half adder, full adder, 4-bit adder, counter, clock divider, RAM, a 4-bit CPU and an LED screen.
+- [Accounts, saving and plans](https://stutr.nuxply.com/docs/account.md): How saving works in Stutr, signing in, exporting or deleting your data, the Free, Pro, Student, Classroom and Founder plans, and managing billing.
+
+## Machine-readable
+
+- [All documentation in one file](https://stutr.nuxply.com/llms-full.txt): every page below in markdown
+- [Parts as JSON](https://stutr.nuxply.com/docs/parts.json): every part with its pins, default width, settings and example
+
+## Product
+
+- [Home](https://stutr.nuxply.com/): what Stutr is
+- [FAQ](https://stutr.nuxply.com/faq): common questions
+- [Pricing](https://stutr.nuxply.com/pricing): plans and prices
+- [Privacy policy](https://stutr.nuxply.com/privacy)
+- [Terms of service](https://stutr.nuxply.com/terms)
+
+## Optional
+
+- [Open the editor](https://stutr.nuxply.com/app): the circuit editor (needs a browser)

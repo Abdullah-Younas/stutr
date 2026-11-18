@@ -5,4 +5,27 @@ Disallow: /pricing
 Disallow: /login
 Disallow: /app
 
-Sitemap: http://localhost:5173/sitemap.xml
+# AI assistants and AI search: the docs are public. Start at /llms.txt
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+User-agent: cohere-ai
+User-agent: Meta-ExternalAgent
+User-agent: Amazonbot
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /start
+Disallow: /pricing
+Disallow: /login
+Disallow: /app
+
+Sitemap: https://stutr.nuxply.com/sitemap.xml

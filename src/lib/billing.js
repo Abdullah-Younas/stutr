@@ -6,6 +6,7 @@ const WORDS = {
   already_paid: 'You already have an active plan.',
   signin: 'Please sign in first.',
   not_configured: 'Checkout is not set up yet. Please try again later.',
+  no_customer: 'We could not find a billing account for you yet. If you just paid, wait a minute and try again.',
 }
 
 // Returns 'login' when the person must sign in first, otherwise sends the browser to Polar's checkout.
@@ -22,4 +23,16 @@ export async function startCheckout(plan) {
   }
   window.location.assign(data.url)
   return 'redirect'
+}
+
+// Opens Polar's secure billing page: change plan, cancel, update the card, download invoices.
+export async function openPortal() {
+  const { configured, supabase } = await import('./supabase')
+  if (!configured) throw new Error(WORDS.not_configured)
+  const { data, error } = await supabase.functions.invoke('polar-portal', { body: {} })
+  if (error) {
+    const body = await error.context?.json?.().catch(() => null)
+    throw new Error(WORDS[body?.error] || 'Could not open the billing page. Please try again.')
+  }
+  window.location.assign(data.url)
 }

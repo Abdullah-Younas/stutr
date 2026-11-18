@@ -3,7 +3,7 @@ import './dashboard.css'
 import './studio.css'
 import './dashboard-ui.css'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, Cpu, Download, Eraser, FilePlus, Folder, Hand, LayoutGrid, Library, Lightbulb, Menu, Monitor, MousePointer2, Search, Settings as Cog, Wrench, X } from 'lucide-react'
+import { BookOpen, Cpu, Download, Eraser, FilePlus, Folder, Hand, LayoutGrid, Library, Lightbulb, Menu, Monitor, MousePointer2, Search, Settings as Cog, User, Wrench, X } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './lib/auth'
 import { makeStore } from './lib/store'
@@ -15,6 +15,7 @@ import {
   mk, pop, W, NN, SW, SH, SMAX, TX, INS, OUTS, OW, shift, DEFS, dims, snap, pinIn, pinOut, NAME, START, sim, settle, M, clamp, gen, lit, parse,
 } from './engine'
 import { ScreenStudio, ScreenView } from './ScreenParts'
+import Profile from './Profile'
 import { resized } from './screen'
 
 /* ================= Code tab ================= */
@@ -773,6 +774,7 @@ const NAV = [
   { label: 'My work', items: [
     { id: 'projects', name: 'Projects', icon: Folder },
     { id: 'create', name: 'Create', icon: FilePlus },
+    { id: 'profile', name: 'Profile & plan', icon: User },
   ] },
   { label: 'Build', items: [
     { id: 'tools', name: 'Parts & tools', icon: Wrench },
@@ -1006,7 +1008,7 @@ export default function Dashboard() {
           {user ? (
             <>
               <span className="avatar" aria-hidden="true">{String(user.user_metadata?.user_name || user.email || '?')[0].toUpperCase()}</span>
-              <span className="who" title={user.email}>{user.user_metadata?.user_name || user.email}</span>
+              <button type="button" className="who" title="Your profile and plan" onClick={() => { setDrawer(false); setModal('profile') }}>{user.user_metadata?.user_name || user.email}</button>
               <button type="button" onClick={async () => { await signOut(); navigate('/') }}>Sign out</button>
             </>
           ) : <Link to="/login">Sign in to sync</Link>}
@@ -1081,10 +1083,16 @@ export default function Dashboard() {
           ))}
         </Modal>
       )}
+      {modal === 'profile' && (
+        <Modal title="Profile and plan" onClose={close}>
+          <Profile user={user} onSettings={() => setModal('settings')} onSignOut={async () => { await signOut(); navigate('/') }} />
+        </Modal>
+      )}
       {modal === 'docs' && (
         <Modal title="Documentation" onClose={close}>
           <p className="empty">One line per part. Parts can refer to ones defined further down.</p>
           <pre className="docs">{DOCS}</pre>
+          <p className="empty">Full documentation: <a href="/docs" target="_blank" rel="noopener noreferrer">overview</a> · <a href="/docs/language" target="_blank" rel="noopener noreferrer">language</a> · <a href="/docs/parts" target="_blank" rel="noopener noreferrer">every part</a> · <a href="/docs/led-screen" target="_blank" rel="noopener noreferrer">LED screen</a></p>
         </Modal>
       )}
       {modal === 'settings' && (

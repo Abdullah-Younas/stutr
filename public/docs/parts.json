@@ -1,0 +1,971 @@
+{
+  "source": "https://stutr.nuxply.com/docs/parts",
+  "parts": [
+    {
+      "type": "IN",
+      "name": "Pin (input)",
+      "category": "Wiring",
+      "code": "input",
+      "aliases": [
+        "in"
+      ],
+      "description": "A value you control. Click it with the Poke tool to change it: a 1-bit pin flips between 0 and 1, a wider pin counts up by one and wraps around.",
+      "inputs": "none",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input<4>(9)\nled = output(a)\ny = output<4>(b)"
+    },
+    {
+      "type": "CLK",
+      "name": "Clock",
+      "category": "Wiring",
+      "code": "clock",
+      "aliases": [
+        "clk"
+      ],
+      "description": "A pin that flips between 0 and 1 by itself while the circuit is running (press Run). Clocked parts act on its rising edge, the moment it goes from 0 to 1. Click it with the Poke tool to step one edge at a time.",
+      "inputs": "none",
+      "outputs": "1 unlabeled",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "ck = clock()\nc = counter<3>(ck)\ny = output<3>(c)"
+    },
+    {
+      "type": "CONST",
+      "name": "Constant",
+      "category": "Wiring",
+      "code": "constant",
+      "aliases": [
+        "const"
+      ],
+      "description": "A fixed number, 0 to 65535, cut down to the part's width.",
+      "inputs": "none",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1",
+        "value: Value, default 1"
+      ],
+      "clocked": false,
+      "example": "k = constant<4>(9)\ny = output<4>(k)"
+    },
+    {
+      "type": "POWER",
+      "name": "Power",
+      "category": "Wiring",
+      "code": "power",
+      "aliases": [],
+      "description": "Always outputs all ones (a 1 on every bit of its width).",
+      "inputs": "none",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "p = power()\ny = output(p)"
+    },
+    {
+      "type": "GND",
+      "name": "Ground",
+      "category": "Wiring",
+      "code": "ground",
+      "aliases": [
+        "gnd"
+      ],
+      "description": "Always outputs 0.",
+      "inputs": "none",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "g = ground()\ny = output(g)"
+    },
+    {
+      "type": "OUT",
+      "name": "Probe (output)",
+      "category": "Wiring",
+      "code": "output",
+      "aliases": [
+        "out"
+      ],
+      "description": "Shows the value that reaches it. Use it to read a result. Wide probes show the number in hexadecimal.",
+      "inputs": "1 unlabeled",
+      "outputs": "none",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(5)\ny = output<4>(a)"
+    },
+    {
+      "type": "SPLIT",
+      "name": "Splitter",
+      "category": "Wiring",
+      "code": "split",
+      "aliases": [
+        "splitter"
+      ],
+      "description": "Breaks a multi-bit value into single bits. Bit 0 is the lowest. Refer to a bit with square brackets: `sp[0]`.",
+      "inputs": "In",
+      "outputs": "one 1-bit output per bit of the width (0 is the lowest)",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(5)\nsp = split<4>(a)\nlow = output(sp[0])\nhigh = output(sp[3])"
+    },
+    {
+      "type": "MERGE",
+      "name": "Combiner",
+      "category": "Wiring",
+      "code": "merge",
+      "aliases": [
+        "combiner"
+      ],
+      "description": "The opposite of a splitter: joins single bits into one multi-bit value. Input 0 becomes the lowest bit.",
+      "inputs": "one 1-bit input per bit of the width (0 is the lowest)",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(0)\nc = input(1)\nd = input(1)\nm = merge<4>(a, b, c, d)\ny = output<4>(m)"
+    },
+    {
+      "type": "TUNNEL",
+      "name": "Tunnel",
+      "category": "Wiring",
+      "code": "tunnel",
+      "aliases": [],
+      "description": "A wireless connection. Tunnels that share the same tag are connected. Wire one of them to a source and the others carry its value, so you can skip long wires.",
+      "inputs": "In",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1",
+        "tag: Tag (same tag = connected)"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nt1 = tunnel(a, tag=\"x\")\nt2 = tunnel(tag=\"x\")\ny = output(t2)"
+    },
+    {
+      "type": "PULL",
+      "name": "Pull resistor",
+      "category": "Wiring",
+      "code": "pull",
+      "aliases": [],
+      "description": "Gives a floating (undriven) wire a definite value. With nothing driving it, it outputs 0 or all ones depending on its setting. Otherwise it passes the input through.",
+      "inputs": "In",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1",
+        "to: Pull to (0 or 1), default \"1\""
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nen = input(0)\nnen = input(1)\nt = tgate(a, en, nen)\np = pull(t, to=\"0\")\ny = output(p)"
+    },
+    {
+      "type": "TRANS",
+      "name": "Transistor",
+      "category": "Wiring",
+      "code": "trans",
+      "aliases": [],
+      "description": "A switch controlled by its gate G. An n-type passes the source S when G is 1. A p-type passes it when G is 0. When closed off, the output floats.",
+      "inputs": "G, S",
+      "outputs": "D",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1",
+        "kind: Type (n or p), default \"n\""
+      ],
+      "clocked": false,
+      "example": "g = input(1)\ns = input(1)\nt = trans(g, s, kind=\"n\")\ny = output(t)"
+    },
+    {
+      "type": "TGATE",
+      "name": "Transmission gate",
+      "category": "Wiring",
+      "code": "tgate",
+      "aliases": [],
+      "description": "Passes A to B when G is 1 and !G is 0. Otherwise B floats.",
+      "inputs": "A, G, !G",
+      "outputs": "B",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\ng = input(1)\nng = input(0)\nt = tgate(a, g, ng)\ny = output(t)"
+    },
+    {
+      "type": "EXT",
+      "name": "Bit extender",
+      "category": "Wiring",
+      "code": "ext",
+      "aliases": [],
+      "description": "Makes a value wider. The new top bits are filled with zeros, ones, or a copy of the sign (top) bit.",
+      "inputs": "In",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4",
+        "to: Output bits, default 8",
+        "fill: Fill (zero one sign), default \"zero\""
+      ],
+      "clocked": false,
+      "example": "a = input<4>(9)\ne = ext<4>(a, to=8, fill=\"sign\")\ny = output<8>(e)"
+    },
+    {
+      "type": "NOT",
+      "name": "NOT gate",
+      "category": "Gates",
+      "code": "not",
+      "aliases": [],
+      "description": "Flips every bit: 1 becomes 0 and 0 becomes 1.",
+      "inputs": "1 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nn = not(a)\ny = output(n)"
+    },
+    {
+      "type": "BUF",
+      "name": "Buffer",
+      "category": "Gates",
+      "code": "buf",
+      "aliases": [],
+      "description": "Passes its input through unchanged. Useful for tidy wiring.",
+      "inputs": "1 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = buf(a)\ny = output(b)"
+    },
+    {
+      "type": "AND",
+      "name": "AND gate",
+      "category": "Gates",
+      "code": "and",
+      "aliases": [],
+      "description": "Outputs 1 only when both inputs are 1. For wider gates it works on each bit separately.",
+      "inputs": "2 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(0)\ng = and(a, b)\ny = output(g)"
+    },
+    {
+      "type": "OR",
+      "name": "OR gate",
+      "category": "Gates",
+      "code": "or",
+      "aliases": [],
+      "description": "Outputs 1 when at least one input is 1.",
+      "inputs": "2 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(0)\ng = or(a, b)\ny = output(g)"
+    },
+    {
+      "type": "NAND",
+      "name": "NAND gate",
+      "category": "Gates",
+      "code": "nand",
+      "aliases": [],
+      "description": "AND followed by NOT. Every other gate can be built from NANDs alone.",
+      "inputs": "2 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(1)\ng = nand(a, b)\ny = output(g)"
+    },
+    {
+      "type": "NOR",
+      "name": "NOR gate",
+      "category": "Gates",
+      "code": "nor",
+      "aliases": [],
+      "description": "OR followed by NOT.",
+      "inputs": "2 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(0)\nb = input(0)\ng = nor(a, b)\ny = output(g)"
+    },
+    {
+      "type": "XOR",
+      "name": "XOR gate",
+      "category": "Gates",
+      "code": "xor",
+      "aliases": [],
+      "description": "Outputs 1 when the inputs differ.",
+      "inputs": "2 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(0)\ng = xor(a, b)\ny = output(g)"
+    },
+    {
+      "type": "XNOR",
+      "name": "XNOR gate",
+      "category": "Gates",
+      "code": "xnor",
+      "aliases": [],
+      "description": "Outputs 1 when the inputs are the same.",
+      "inputs": "2 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(1)\ng = xnor(a, b)\ny = output(g)"
+    },
+    {
+      "type": "ODD",
+      "name": "Odd parity",
+      "category": "Gates",
+      "code": "odd",
+      "aliases": [],
+      "description": "Outputs 1 when an odd number of its three inputs are 1.",
+      "inputs": "3 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(1)\nc = input(1)\np = odd(a, b, c)\ny = output(p)"
+    },
+    {
+      "type": "EVEN",
+      "name": "Even parity",
+      "category": "Gates",
+      "code": "even",
+      "aliases": [],
+      "description": "Outputs 1 when an even number of its three inputs are 1.",
+      "inputs": "3 unlabeled",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input(1)\nb = input(1)\nc = input(0)\np = even(a, b, c)\ny = output(p)"
+    },
+    {
+      "type": "CBUF",
+      "name": "Controlled buffer",
+      "category": "Gates",
+      "code": "cbuf",
+      "aliases": [],
+      "description": "Passes D through only while E is 1. While E is 0 the output floats (nothing drives the wire). This is how several parts share one bus.",
+      "inputs": "D, E",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "d = input<4>(7)\ne = input(1)\ncb = cbuf<4>(d, e)\ny = output<4>(cb)"
+    },
+    {
+      "type": "CINV",
+      "name": "Controlled inverter",
+      "category": "Gates",
+      "code": "cinv",
+      "aliases": [],
+      "description": "Like the controlled buffer, but outputs the inverted value while E is 1.",
+      "inputs": "D, E",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "d = input<4>(7)\ne = input(1)\nci = cinv<4>(d, e)\ny = output<4>(ci)"
+    },
+    {
+      "type": "MUX",
+      "name": "Multiplexer",
+      "category": "Plexers",
+      "code": "mux",
+      "aliases": [],
+      "description": "Chooses one of two inputs. Output is input 0 when S is 0, and input 1 when S is 1.",
+      "inputs": "0, 1, S",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(3)\nb = input<4>(9)\ns = input(1)\nm = mux<4>(a, b, s)\ny = output<4>(m)"
+    },
+    {
+      "type": "DEMUX",
+      "name": "Demultiplexer",
+      "category": "Plexers",
+      "code": "demux",
+      "aliases": [],
+      "description": "Sends D to output 0 or output 1, depending on S. The other output is 0.",
+      "inputs": "D, S",
+      "outputs": "0, 1",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "d = input<4>(5)\ns = input(1)\ndm = demux<4>(d, s)\ny0 = output<4>(dm.out0)\ny1 = output<4>(dm.out1)"
+    },
+    {
+      "type": "DEC",
+      "name": "Decoder",
+      "category": "Plexers",
+      "code": "dec",
+      "aliases": [],
+      "description": "Turns a 2-bit number (S0 is the low bit) into four lines. Exactly one output is 1.",
+      "inputs": "S0, S1",
+      "outputs": "0, 1, 2, 3",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "s0 = input(1)\ns1 = input(0)\ndc = dec(s0, s1)\ny = output(dc.out1)"
+    },
+    {
+      "type": "PENC",
+      "name": "Priority encoder",
+      "category": "Plexers",
+      "code": "penc",
+      "aliases": [],
+      "description": "Reports the highest-numbered input that is 1 as a 2-bit number (Y0 low bit). V is 1 when any input is 1.",
+      "inputs": "0, 1, 2, 3",
+      "outputs": "Y0, Y1, V",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "a = input(0)\nb = input(1)\nc = input(0)\nd = input(0)\npe = penc(a, b, c, d)\ny = output(pe.y0)\nv = output(pe.valid)"
+    },
+    {
+      "type": "BSEL",
+      "name": "Bit selector",
+      "category": "Plexers",
+      "code": "bsel",
+      "aliases": [],
+      "description": "Outputs a single bit of the input, chosen by the Sel number.",
+      "inputs": "In, Sel",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "8",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 8"
+      ],
+      "clocked": false,
+      "example": "a = input<8>(0b10100000)\ni = input<3>(5)\nb = bsel<8>(a, i)\ny = output(b)"
+    },
+    {
+      "type": "ADD",
+      "name": "Adder",
+      "category": "Arithmetic",
+      "code": "add",
+      "aliases": [],
+      "description": "Adds A and B plus a carry-in Ci. Outputs the sum and a carry-out. Numbers are unsigned and wrap around.",
+      "inputs": "A, B, Ci",
+      "outputs": "S, Co",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(7)\nb = input<4>(9)\ns = add<4>(a, b)\nsum = output<4>(s)\nco = output(s.carry)"
+    },
+    {
+      "type": "SUB",
+      "name": "Subtractor",
+      "category": "Arithmetic",
+      "code": "sub",
+      "aliases": [],
+      "description": "Computes A minus B minus a borrow-in Bi. Outputs the difference and a borrow-out.",
+      "inputs": "A, B, Bi",
+      "outputs": "D, Bo",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(9)\nb = input<4>(7)\nd = sub<4>(a, b)\ndiff = output<4>(d)\nbo = output(d.borrow)"
+    },
+    {
+      "type": "MUL",
+      "name": "Multiplier",
+      "category": "Arithmetic",
+      "code": "mul",
+      "aliases": [],
+      "description": "Computes A times B plus Ci. The low half of the answer is the product and the high half is the carry output.",
+      "inputs": "A, B, Ci",
+      "outputs": "P, Co",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(6)\nb = input<4>(7)\nm = mul<4>(a, b)\np = output<4>(m)\nhi = output<4>(m.carry)"
+    },
+    {
+      "type": "DIV",
+      "name": "Divider",
+      "category": "Arithmetic",
+      "code": "div",
+      "aliases": [],
+      "description": "Divides A by B and outputs the quotient and the remainder. Up supplies extra high bits of the dividend. Dividing by zero gives an all-ones quotient and a remainder of 0.",
+      "inputs": "A, B, Up",
+      "outputs": "Q, R",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(13)\nb = input<4>(3)\nd = div<4>(a, b)\nq = output<4>(d.quotient)\nr = output<4>(d.remainder)"
+    },
+    {
+      "type": "NEG",
+      "name": "Negator",
+      "category": "Arithmetic",
+      "code": "neg",
+      "aliases": [],
+      "description": "Two's complement negative of the input.",
+      "inputs": "In",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(3)\nn = neg<4>(a)\ny = output<4>(n)"
+    },
+    {
+      "type": "CMP",
+      "name": "Comparator",
+      "category": "Arithmetic",
+      "code": "cmp",
+      "aliases": [],
+      "description": "Compares A and B as unsigned numbers. Exactly one of the three outputs is 1.",
+      "inputs": "A, B",
+      "outputs": ">, =, <",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(5)\nb = input<4>(3)\nc = cmp<4>(a, b)\ngt = output(c.gt)\neq = output(c.eq)\nlt = output(c.lt)"
+    },
+    {
+      "type": "SHIFT",
+      "name": "Shifter",
+      "category": "Arithmetic",
+      "code": "shift",
+      "aliases": [],
+      "description": "Shifts or rotates the input by Sh places. Modes: `ll` logical left, `lr` logical right, `ar` arithmetic right (keeps the sign), `rl` rotate left, `rr` rotate right.",
+      "inputs": "In, Sh",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4",
+        "mode: Mode (ll lr ar rl rr), default \"ll\""
+      ],
+      "clocked": false,
+      "example": "a = input<4>(0b0110)\nn = input<2>(1)\nsh = shift<4>(a, n, mode=\"lr\")\ny = output<4>(sh)"
+    },
+    {
+      "type": "BADD",
+      "name": "Bit adder",
+      "category": "Arithmetic",
+      "code": "badd",
+      "aliases": [],
+      "description": "Counts how many bits are 1 across its three inputs.",
+      "inputs": "0, 1, 2",
+      "outputs": "N",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(0b1011)\nb = input<4>(0b0001)\nc = input<4>(0)\nn = badd<4>(a, b, c)\ny = output<4>(n)"
+    },
+    {
+      "type": "BFIND",
+      "name": "Bit finder",
+      "category": "Arithmetic",
+      "code": "bfind",
+      "aliases": [],
+      "description": "Finds the position of the lowest or highest bit that is 1 (or 0). Found is 1 when there is one. Modes: `low1`, `high1`, `low0`, `high0`.",
+      "inputs": "In",
+      "outputs": "Idx, P",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4",
+        "find: Find (low1 high1 low0 high0), default \"low1\""
+      ],
+      "clocked": false,
+      "example": "a = input<4>(0b0100)\nf = bfind<4>(a, find=\"low1\")\nidx = output<2>(f.index)\nok = output(f.found)"
+    },
+    {
+      "type": "DFF",
+      "name": "D flip-flop",
+      "category": "Memory",
+      "code": "dff",
+      "aliases": [],
+      "description": "Stores its input D on each rising clock edge. Q is the stored value and !Q is its opposite.",
+      "inputs": "D, >",
+      "outputs": "Q, !Q",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": true,
+      "example": "d = input(1)\nck = clock()\nff = dff(d, ck)\nq = output(ff.q)\nnq = output(ff.nq)"
+    },
+    {
+      "type": "TFF",
+      "name": "T flip-flop",
+      "category": "Memory",
+      "code": "tff",
+      "aliases": [],
+      "description": "Flips its stored value on a rising clock edge when T is 1. Wired to 1 it divides the clock frequency by two.",
+      "inputs": "T, >",
+      "outputs": "Q, !Q",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": true,
+      "example": "t = input(1)\nck = clock()\nff = tff(t, ck)\nq = output(ff.q)"
+    },
+    {
+      "type": "JKFF",
+      "name": "J-K flip-flop",
+      "category": "Memory",
+      "code": "jkff",
+      "aliases": [],
+      "description": "On a rising edge: J=1 sets it, K=1 clears it, both 1 flips it, both 0 holds it.",
+      "inputs": "J, >, K",
+      "outputs": "Q, !Q",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": true,
+      "example": "j = input(1)\nk = input(0)\nck = clock()\nff = jkff(j, ck, k)\nq = output(ff.q)"
+    },
+    {
+      "type": "SRFF",
+      "name": "S-R flip-flop",
+      "category": "Memory",
+      "code": "srff",
+      "aliases": [],
+      "description": "On a rising edge: S=1 sets it, R=1 clears it.",
+      "inputs": "S, >, R",
+      "outputs": "Q, !Q",
+      "defaultWidth": "1",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 1"
+      ],
+      "clocked": true,
+      "example": "s = input(1)\nr = input(0)\nck = clock()\nff = srff(s, ck, r)\nq = output(ff.q)"
+    },
+    {
+      "type": "REG",
+      "name": "Register",
+      "category": "Memory",
+      "code": "reg",
+      "aliases": [
+        "register"
+      ],
+      "description": "Stores a multi-bit value on each rising clock edge.",
+      "inputs": "D, >",
+      "outputs": "Q",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": true,
+      "example": "d = input<4>(9)\nck = clock()\nr = register<4>(d, ck)\ny = output<4>(r)"
+    },
+    {
+      "type": "CTR",
+      "name": "Counter",
+      "category": "Memory",
+      "code": "ctr",
+      "aliases": [
+        "counter"
+      ],
+      "description": "Adds one on every rising clock edge and wraps back to 0 after its largest value.",
+      "inputs": ">",
+      "outputs": "Q",
+      "defaultWidth": "2",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 2"
+      ],
+      "clocked": true,
+      "example": "ck = clock()\nc = counter<4>(ck)\ny = output<4>(c)"
+    },
+    {
+      "type": "SHREG",
+      "name": "Shift register",
+      "category": "Memory",
+      "code": "shreg",
+      "aliases": [],
+      "description": "A chain of stages. Each clock edge moves values one stage along. The output is the value from the last stage, so it appears after as many clocks as there are stages.",
+      "inputs": "In, >",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4",
+        "stages: Stages, default 4"
+      ],
+      "clocked": true,
+      "example": "d = input<4>(5)\nck = clock()\nsr = shreg<4>(d, ck, stages=3)\ny = output<4>(sr)"
+    },
+    {
+      "type": "RND",
+      "name": "Random generator",
+      "category": "Memory",
+      "code": "rnd",
+      "aliases": [],
+      "description": "Produces a new pseudo-random number on every rising clock edge.",
+      "inputs": ">",
+      "outputs": "1 unlabeled",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": true,
+      "example": "ck = clock()\nr = rnd<4>(ck)\ny = output<4>(r)"
+    },
+    {
+      "type": "RAM",
+      "name": "RAM",
+      "category": "Memory",
+      "code": "ram",
+      "aliases": [],
+      "description": "Memory you can write and read. When WE is 1, a rising clock edge stores D at address A. Q always shows what is stored at the current address (reading needs no clock). Contents are not saved with the circuit.",
+      "inputs": "A, D, WE, >",
+      "outputs": "Q",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4",
+        "addr: Address bits, default 4"
+      ],
+      "clocked": true,
+      "example": "a = input<4>(3)\nd = input<4>(9)\nwe = input(1)\nck = clock()\nm = ram<4>(a, d, we, ck, addr=4)\ny = output<4>(m)"
+    },
+    {
+      "type": "ROM",
+      "name": "ROM",
+      "category": "Memory",
+      "code": "rom",
+      "aliases": [],
+      "description": "Read-only memory. List its contents as hexadecimal words separated by spaces in the `data` setting. Word 0 comes first.",
+      "inputs": "A",
+      "outputs": "D",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4",
+        "addr: Address bits, default 4",
+        "data: Contents (hex words)"
+      ],
+      "clocked": false,
+      "example": "a = input<4>(1)\nr = rom<4>(a, addr=4, data=\"3 a f\")\ny = output<4>(r)"
+    },
+    {
+      "type": "BTN",
+      "name": "Button",
+      "category": "Input and output",
+      "code": "button",
+      "aliases": [
+        "btn"
+      ],
+      "description": "Outputs 1 while you hold it down with the Poke tool and 0 when you let go.",
+      "inputs": "none",
+      "outputs": "1 unlabeled",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "b = button()\nl = led(b)"
+    },
+    {
+      "type": "JOY",
+      "name": "Joystick",
+      "category": "Input and output",
+      "code": "joystick",
+      "aliases": [
+        "joy"
+      ],
+      "description": "Drag inside it with the Poke tool to set X and Y. It rests in the middle.",
+      "inputs": "none",
+      "outputs": "X, Y",
+      "defaultWidth": "4",
+      "settings": [
+        "bits (also written <bits>): data width, 1 to 16, default 4"
+      ],
+      "clocked": false,
+      "example": "j = joystick<4>()\nx = output<4>(j.x)\ny = output<4>(j.y)"
+    },
+    {
+      "type": "KEYB",
+      "name": "Keyboard",
+      "category": "Input and output",
+      "code": "keyboard",
+      "aliases": [
+        "keyb"
+      ],
+      "description": "Type while it is selected and the characters queue up. Each rising clock edge moves to the next character. Ch is the 7-bit ASCII code and Av is 1 when a character is waiting.",
+      "inputs": ">",
+      "outputs": "Ch, Av",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "ck = clock()\nk = keyboard(ck)\nc = output<7>(k.char)\nav = output(k.ready)"
+    },
+    {
+      "type": "LED",
+      "name": "LED",
+      "category": "Input and output",
+      "code": "led",
+      "aliases": [],
+      "description": "A light that is on when its input is 1.",
+      "inputs": "1 unlabeled",
+      "outputs": "none",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "a = input(1)\nl = led(a)"
+    },
+    {
+      "type": "SEG7",
+      "name": "7-segment display",
+      "category": "Input and output",
+      "code": "seg7",
+      "aliases": [],
+      "description": "Seven inputs, one for each segment (a to g). A segment lights when its input is 1.",
+      "inputs": "a, b, c, d, e, f, g",
+      "outputs": "none",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "one = constant(1)\nzero = constant(0)\ndisp = seg7(one, one, one, one, one, one, zero)"
+    },
+    {
+      "type": "HEX",
+      "name": "Hex digit display",
+      "category": "Input and output",
+      "code": "hex",
+      "aliases": [],
+      "description": "Shows a 4-bit number as a hexadecimal digit, 0 to F.",
+      "inputs": "D",
+      "outputs": "none",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": false,
+      "example": "v = input<4>(10)\nh = hex(v)"
+    },
+    {
+      "type": "MATRIX",
+      "name": "LED matrix",
+      "category": "Input and output",
+      "code": "matrix",
+      "aliases": [],
+      "description": "A grid of LEDs driven by scanning. A light at column k and row r is on when bit k of C and bit r of R are both 1. Show a picture by switching rows quickly one after another. See the LED screen guide.",
+      "inputs": "C, R",
+      "outputs": "none",
+      "defaultWidth": "5",
+      "settings": [
+        "bits (also written <bits>): Columns, 1 to 16, default 5",
+        "rows: Rows, default 7"
+      ],
+      "clocked": false,
+      "example": "c = input<5>(0b10101)\nr = input<7>(0b1111111)\nm = matrix<5>(c, r, rows=7)"
+    },
+    {
+      "type": "TTY",
+      "name": "TTY (terminal)",
+      "category": "Input and output",
+      "code": "tty",
+      "aliases": [],
+      "description": "A small text terminal. On each rising clock edge it adds the character whose 7-bit ASCII code is on D. Code 8 deletes the last character and 13 or 10 starts a new line.",
+      "inputs": "D, >",
+      "outputs": "none",
+      "defaultWidth": null,
+      "settings": [],
+      "clocked": true,
+      "example": "d = input<7>(65)\nck = clock()\nt = tty(d, ck)"
+    },
+    {
+      "type": "SCREEN",
+      "name": "LED screen",
+      "category": "Input and output",
+      "code": "screen",
+      "aliases": [],
+      "description": "One part that holds a whole picture, up to 2048 by 2048 pixels, shown as solid square pixels like a monitor. A circuit draws on it with X, Y, D, WE and a clock, and you can also paint on it by hand. Read the LED screen guide.",
+      "inputs": "X, Y, D, WE, CLR, >",
+      "outputs": "none",
+      "defaultWidth": "3",
+      "settings": [
+        "bits (also written <bits>): Color bits, 1 to 16, default 3",
+        "width: Width, default 16, 1 to 2048",
+        "height: Height, default 16, 1 to 2048",
+        "color: Color (hex), default \"#ff5470\""
+      ],
+      "clocked": true,
+      "example": "ck = clock()\nn = counter<6>(ck)\nsp = split<6>(n)\nx = merge<3>(sp[0], sp[1], sp[2])\ny = merge<3>(sp[3], sp[4], sp[5])\nd = xor<3>(x, y)\nwe = constant(1)\nscr = screen<3>(x, y, d, we, None, ck, width=8, height=8)"
+    },
+    {
+      "type": "TEXT",
+      "name": "Text note",
+      "category": "Notes",
+      "code": "text",
+      "aliases": [],
+      "description": "A label you can place anywhere to explain your circuit. It does nothing in the simulation.",
+      "inputs": "none",
+      "outputs": "none",
+      "defaultWidth": null,
+      "settings": [
+        "text: Text, default \"text\""
+      ],
+      "clocked": false,
+      "example": "note = text(\"my circuit\")"
+    }
+  ]
+}

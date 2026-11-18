@@ -1,0 +1,1742 @@
+# Stutr: complete documentation
+
+> Stutr is a code-based digital logic circuit simulator that runs in the browser. Build circuits by typing short lines of code or by dragging parts onto a canvas; both views stay in sync and the circuit runs live. It has gates, buses, flip-flops, counters, RAM and ROM, a 4-bit CPU example, and an LED screen part up to 2048 by 2048 pixels.
+
+Website: https://stutr.nuxply.com/
+
+<!-- https://stutr.nuxply.com/docs -->
+
+# Stutr documentation
+
+> Learn Stutr, the code-based circuit simulator: how it works, a five-minute start, and links to the language, editor, parts and LED screen guides.
+
+## What Stutr is
+
+Stutr is a digital logic circuit simulator that runs in your browser. You build a circuit in two ways that always stay in sync: type it as short lines of code, or drag parts onto a canvas and wire them together. Press Run and the circuit works live: gates switch, counters count, memory stores, and an LED screen can show pictures. It is an alternative to Logisim with a text language, and nothing needs to be installed.
+
+These docs cover everything in the app. Read them in order, or jump to what you need:
+
+- [The circuit language](/docs/language): how to write a circuit as code.
+- [The editor](/docs/editor): tools, shortcuts, the run bar and settings.
+- [Parts reference](/docs/parts): every part, with its pins, settings and an example.
+- [LED screen guide](/docs/led-screen): build screens up to 2048 by 2048 and draw on them.
+- [Examples](/docs/examples): ready-made circuits including a 4-bit CPU.
+- [Accounts, saving and plans](/docs/account): projects, your profile and billing.
+
+## Five-minute start
+
+Open the editor at `/app`. You can use it without an account. The Code tab and the Editor tab show the same circuit. Paste this into the Code tab:
+
+```stutr
+# a half adder: adds two bits
+a = input(1)
+b = input(1)
+sum = xor(a, b)
+carry = and(a, b)
+s = output(sum)
+c = output(carry)
+```
+
+Switch to the Editor tab. You will see two inputs, an XOR gate, an AND gate and two probes, already wired. Choose the Poke tool (press `P`) and click the inputs `a` and `b` to flip them. The probe `s` shows the sum and `c` shows the carry.
+
+Now try a clocked circuit. Add these lines, then press Run above the canvas:
+
+```stutr
+ck = clock()
+n = counter<3>(ck)
+out = output<3>(n)
+```
+
+The clock ticks, the counter adds one on each rising edge, and the probe counts 0 to 7 and wraps. Use the speed menu next to Run to go faster or slower. Click the clock with the Poke tool to step one edge by hand.
+
+## Ideas to know first
+
+### Values are numbers made of bits
+
+Every wire carries a whole number between 0 and 2 to the power of its width minus one. A single-bit wire is 0 or 1. Widths go from 1 to 16 bits. You set a part's width with `<bits>` in code (`add<4>`) or the Data bits field in its panel. A wider wire into a narrower input loses its top bits. A narrower wire into a wider input is padded with zeros. Use the splitter, combiner and bit extender to reshape values on purpose.
+
+### Two kinds of parts
+
+Combinational parts (gates, adders, multiplexers and similar) always show the result of their current inputs. Clocked parts (flip-flops, registers, counters, RAM, shift registers, the keyboard, TTY and LED screen) remember something. They only look at their inputs at the moment their clock pin rises from 0 to 1, called the rising edge, and then change.
+
+### Floating wires
+
+A wire with nothing driving it is floating. Most parts treat a floating input as 0. The controlled buffer and inverter, transistor and transmission gate can leave their output floating on purpose, and the pull resistor and tunnel handle floating values. This lets several parts share one bus.
+
+### Names
+
+Every part has a name, and the name is how code and wires refer to it. Rename a part in its panel, with the Label tool, or by changing the name in the code. Names use letters, digits and underscores, cannot start with a digit, and must be unique.
+
+### Limits
+
+- Widths are 1 to 16 bits.
+- A combinational loop (a wire feeding back into its own logic without a flip-flop) reads as floating. Use a flip-flop to build memory.
+- Memory contents (RAM, registers and so on) and LED screen pixels are not saved in the circuit code.
+- There are no subcircuits yet.
+
+<!-- https://stutr.nuxply.com/docs/language -->
+
+# The circuit language
+
+> The Stutr circuit language: one line per part, how to wire inputs, set bit widths and settings, use numbers and comments, and fix errors.
+
+## The shape of a line
+
+A circuit is a list of lines. Each line makes one part:
+
+```text
+name = part<bits>(input, input, setting=value)
+```
+
+- `name` is what you call the part.
+- `part` is its type, such as `and`, `add` or `ram`. See the [parts reference](/docs/parts) for every name.
+- `<bits>` is the width, 1 to 16. It is optional. You can also write `bits=4` inside the brackets.
+- The things inside the brackets are its inputs, in pin order, followed by any settings.
+
+One line per part. A `#` or `//` starts a comment that runs to the end of the line. A `;` at the end of a line is allowed and ignored. Blank lines are fine. Parts may refer to parts defined further down, so order does not matter.
+
+```stutr
+a = input(1)       # a pin that starts at 1
+b = input(0)
+g = and(a, b)     // an AND gate
+y = output(g);
+```
+
+## Wiring inputs
+
+Each input of a part is the name of the part whose output feeds it:
+
+```stutr
+a = input(1)
+b = input(1)
+g = and(a, b)   # pin 0 comes from a, pin 1 from b
+```
+
+- Leave an input unconnected with `None` or `_`. It reads as 0 (or floating, for parts that allow it). Trailing unconnected inputs can simply be left off.
+- A part with several outputs uses a dot and the output's name, or square brackets and its number: `s.carry` and `s[1]` mean the same thing. Names for each part are in the parts reference.
+- An output can feed any number of inputs. An input takes exactly one wire.
+- A connection is checked as it is read: if you name something that is not an output of any part, you get an error on that line.
+
+```stutr
+a = input<4>(7)
+b = input<4>(9)
+s = add<4>(a, b)
+sum = output<4>(s)       # first output: the sum
+co = output(s.carry)     # second output: the carry
+```
+
+## Parts with no inputs
+
+Pins, constants and a few others have no inputs, so the first value in the brackets is the part's own value:
+
+```stutr
+a = input(1)          # a pin set to 1
+w = input<8>(0xA5)    # an 8-bit pin set to 165
+k = constant<4>(9)   # a fixed value
+ck = clock()          # no value needed
+n = text("hello")     # a note
+```
+
+You can write numbers in decimal (`12`), hexadecimal (`0xC`) or binary (`0b1100`). Text goes in double quotes.
+
+## Settings
+
+Some parts have extra settings, written as `key=value` after the inputs:
+
+```stutr
+a = input<4>(1)
+n = input<2>(1)
+x = input<6>(0)
+y = input<6>(0)
+d = input<3>(5)
+we = input(1)
+ck = clock()
+
+r = rom<4>(a, addr=4, data="3 a f")
+sh = shift<4>(a, n, mode="rr")
+sc = screen<3>(x, y, d, we, None, ck, width=64, height=64, color="#3be0ff")
+```
+
+| Setting | On which parts | What it does |
+| --- | --- | --- |
+| `value` | constant | The fixed number |
+| `to` | bit extender, pull resistor | Extender: the output width. Pull resistor: `"0"` or `"1"` |
+| `fill` | bit extender | `"zero"`, `"one"` or `"sign"` |
+| `mode` | shifter | `ll`, `lr`, `ar`, `rl` or `rr` |
+| `find` | bit finder | `low1`, `high1`, `low0` or `high0` |
+| `stages` | shift register | How many stages |
+| `addr` | RAM, ROM | Address width in bits |
+| `data` | ROM | Contents as hexadecimal words separated by spaces |
+| `rows` | LED matrix | Number of rows |
+| `width`, `height` | LED screen | Size in pixels, 1 to 2048 each |
+| `color` | LED screen | LED color as `"#rrggbb"` |
+| `tag` | tunnel | Name that connects tunnels together |
+| `kind` | transistor | `"n"` or `"p"` |
+| `text` | text note | The words |
+
+Every part page in the [parts reference](/docs/parts) lists exactly which settings it accepts.
+
+## Other names for parts
+
+A few parts have friendlier words in code. Both forms work when you type, but the editor writes the first form.
+
+| Part | Code word | Also accepted |
+| --- | --- | --- |
+| Pin (input) | `input` | `in` |
+| Clock | `clock` | `clk` |
+| Probe (output) | `output` | `out` |
+| Button | `button` | `btn` |
+| Constant | `constant` | `const` |
+| Ground | `ground` | `gnd` |
+| Joystick | `joystick` | `joy` |
+| Keyboard | `keyboard` | `keyb` |
+| Splitter | `split` | `splitter` |
+| Combiner | `merge` | `combiner` |
+| Register | `reg` | `register` |
+| Counter | `ctr` | `counter` |
+
+## Where parts go
+
+Code has no coordinates. A part keeps its place on the canvas as long as its name and type stay the same. New parts are placed automatically, left to right by how many steps they are from an input. Drag them wherever you like. Moving things on the canvas never changes the code.
+
+## When something is wrong
+
+If a line cannot be read, the Code tab shows the line number and what is wrong, and the canvas keeps the last circuit that worked. Fix the line and the canvas updates. Messages you may see:
+
+| Message | What it means |
+| --- | --- |
+| `can't read "…". Write: name = part<bits>(inputs)` | The line does not have the shape `name = part(...)`. |
+| `unknown part "x"` | There is no part with that word. Check the spelling against the parts reference. |
+| `name "x" is used twice` | Two parts have the same name. |
+| `x has no setting "y"` | That part does not accept that setting. |
+| `x takes N input(s)` | You gave more inputs than the part has pins. |
+| `"x" is not an output of any part` | An input refers to a name that does not exist, or to an output the part does not have. |
+| `can't read the value of y` | A setting value is not a number or a quoted word. |
+
+<!-- https://stutr.nuxply.com/docs/editor -->
+
+# The editor
+
+> How to use the Stutr editor: the Code and Editor panes, the run bar, every tool, keyboard shortcuts, zoom and pan, the part panel, menus and settings.
+
+## The workspace
+
+The editor has two views of one circuit: **Code** (the text) and **Editor** (the canvas). Use the buttons in the top bar to show one at a time as tabs, or side by side in a row or a column. In side-by-side mode, drag the divider to resize. Your choice is remembered.
+
+The menu on the left holds your projects, parts, examples, export, documentation and settings. On a phone or tablet it opens from the menu button.
+
+## The run bar
+
+| Control | What it does |
+| --- | --- |
+| Run / Pause | Starts and stops every clock in the circuit. It needs at least one clock part. |
+| Speed menu | How fast the clock runs: 1, 2, 5, 10, 20, 50 or 100 Hz. |
+| Fit view | Zooms and pans so the whole circuit is visible. |
+| − and + | Zoom out and in. |
+| Undo / Redo | Step back or forward through your edits. |
+
+## Tools
+
+Pick a tool from the Parts and tools panel, or press its key. The hint at the bottom of the canvas always tells you what the current tool does.
+
+| Tool | Key | What it does |
+| --- | --- | --- |
+| Poke | `P` | Use the circuit. Click an input or clock to change it, hold a button, drag a joystick. Drag from one pin to another to draw a wire. Parts can still be dragged. |
+| Edit | `E` | Drag parts to move them. `Delete` removes the selection. |
+| Select | `S` | Drag a box around several parts, then move them together or delete them. |
+| Erase | `X` | Click a part or a wire to remove it. |
+| Text | `T` | Click the canvas to place a text note. |
+| Menu | `M` | Click a part for a small menu with Duplicate and Delete. |
+| Label | `L` | Click a part, then type its new name in the panel. |
+
+To place any part, pick it from the Parts and tools panel and click the canvas. It stays selected so you can place several. Press `Esc` to go back to Poke.
+
+## Wires
+
+- Drag from an output pin to an input pin (or the other way round) with the Poke tool.
+- An input takes one wire. Connecting a second wire to the same input replaces the first.
+- An output can feed many inputs. A filled dot marks an output that feeds more than one wire.
+- Wires glow and show a moving pulse when they carry a non-zero value. Thick wires are buses (more than 1 bit).
+- To remove a wire, hold `D` and click it, or use the Erase tool.
+- Settings let you choose right-angle or straight wires.
+
+## The part panel
+
+Click a part (Edit or Poke tool) to open its panel on the right. It shows:
+
+- **Name**: edit it to rename the part everywhere.
+- **Data bits**: the width, 1 to 16.
+- Part-specific fields such as Address bits, Rows, Stages, Contents, Mode or Color.
+- **Position** and the part's **current outputs** (or inputs), in hexadecimal. `Z` means floating.
+- A **Delete** button. The LED screen also has **Open screen**.
+
+Select several parts with the Select tool and the panel offers Delete all.
+
+## Keyboard and mouse
+
+| Input | Action |
+| --- | --- |
+| `P` `E` `S` `X` | Poke, Edit, Select, Erase |
+| `T` `M` `L` | Text, Menu, Label |
+| Hold `D` | Erase while held: click a wire or part |
+| `Delete` | Remove the selection |
+| `Esc` | Back to Poke |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` or `Ctrl+Shift+Z` | Redo |
+| Mouse wheel | Zoom |
+| Drag empty space | Pan |
+| Two fingers (touch) | Pinch to zoom and drag to pan |
+
+## The menu
+
+| Item | What it does |
+| --- | --- |
+| Projects | Save the current circuit under a name, open or delete saved ones. |
+| Create | Start a new empty circuit. Undo brings the old one back. |
+| Parts and tools | Every tool and part, grouped. |
+| Examples | Ready-made circuits to open and learn from. |
+| LED screen | Picks the LED screen part to place. |
+| Export code | Downloads the circuit as `circuit.stutr.txt`. |
+| Documentation | A quick reference and a link to these docs. |
+| Settings | Editor options, privacy and your data. |
+| Profile and plan | Your account, your plan and billing. |
+| Hardware lab | Arduino boards, breadboards, LEDs and jumper wires. Marked "soon": not available yet. |
+
+## Settings
+
+- Snap to grid: parts jump to a 20 px grid.
+- Show the grid, pin labels and part names.
+- Wire style: right angles or straight lines.
+- Autosave my circuit: reopens where you left off.
+- Confirm before starting a new circuit.
+- Analytics: off unless you allow it.
+- Export my data as a file, and delete everything you have saved.
+
+<!-- https://stutr.nuxply.com/docs/parts -->
+
+# Parts reference
+
+> Every Stutr part: wiring, gates, plexers, arithmetic, memory, input and output. Pins, default width, settings, code name and a working example for each.
+
+## How to read this page
+
+There are 59 parts. For each one you see what it does, the word used in code, its input and output pins in order, its default width, its settings, and a small circuit you can paste into the Code tab.
+
+Pins are listed in the order you write them in code. A pin named `>` is a clock input. "Unlabeled" pins have no name on the canvas. Clocked parts act only on a rising clock edge.
+
+## Wiring
+
+### Pin (input)
+
+A value you control. Click it with the Poke tool to change it: a 1-bit pin flips between 0 and 1, a wider pin counts up by one and wraps around.
+
+- In code: `input` (also `in`)
+- Inputs: none
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input<4>(9)
+led = output(a)
+y = output<4>(b)
+```
+
+### Clock
+
+A pin that flips between 0 and 1 by itself while the circuit is running (press Run). Clocked parts act on its rising edge, the moment it goes from 0 to 1. Click it with the Poke tool to step one edge at a time.
+
+- In code: `clock` (also `clk`)
+- Inputs: none
+- Outputs: 1 unlabeled
+
+```stutr
+ck = clock()
+c = counter<3>(ck)
+y = output<3>(c)
+```
+
+### Constant
+
+A fixed number, 0 to 65535, cut down to the part's width.
+
+- In code: `constant` (also `const`)
+- Inputs: none
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+  - `value`: Value, default 1
+
+```stutr
+k = constant<4>(9)
+y = output<4>(k)
+```
+
+### Power
+
+Always outputs all ones (a 1 on every bit of its width).
+
+- In code: `power`
+- Inputs: none
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+p = power()
+y = output(p)
+```
+
+### Ground
+
+Always outputs 0.
+
+- In code: `ground` (also `gnd`)
+- Inputs: none
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+g = ground()
+y = output(g)
+```
+
+### Probe (output)
+
+Shows the value that reaches it. Use it to read a result. Wide probes show the number in hexadecimal.
+
+- In code: `output` (also `out`)
+- Inputs: 1 unlabeled
+- Outputs: none
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input<4>(5)
+y = output<4>(a)
+```
+
+### Splitter
+
+Breaks a multi-bit value into single bits. Bit 0 is the lowest. Refer to a bit with square brackets: `sp[0]`.
+
+- In code: `split` (also `splitter`)
+- Inputs: In
+- Outputs: one 1-bit output per bit of the width (0 is the lowest)
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+```stutr
+a = input<4>(5)
+sp = split<4>(a)
+low = output(sp[0])
+high = output(sp[3])
+```
+
+### Combiner
+
+The opposite of a splitter: joins single bits into one multi-bit value. Input 0 becomes the lowest bit.
+
+- In code: `merge` (also `combiner`)
+- Inputs: one 1-bit input per bit of the width (0 is the lowest)
+- Outputs: 1 unlabeled
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+```stutr
+a = input(1)
+b = input(0)
+c = input(1)
+d = input(1)
+m = merge<4>(a, b, c, d)
+y = output<4>(m)
+```
+
+### Tunnel
+
+A wireless connection. Tunnels that share the same tag are connected. Wire one of them to a source and the others carry its value, so you can skip long wires.
+
+- In code: `tunnel`
+- Inputs: In
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+  - `tag`: Tag (same tag = connected)
+
+```stutr
+a = input(1)
+t1 = tunnel(a, tag="x")
+t2 = tunnel(tag="x")
+y = output(t2)
+```
+
+### Pull resistor
+
+Gives a floating (undriven) wire a definite value. With nothing driving it, it outputs 0 or all ones depending on its setting. Otherwise it passes the input through.
+
+- In code: `pull`
+- Inputs: In
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+  - `to`: Pull to (0 or 1), default "1"
+
+```stutr
+a = input(1)
+en = input(0)
+nen = input(1)
+t = tgate(a, en, nen)
+p = pull(t, to="0")
+y = output(p)
+```
+
+### Transistor
+
+A switch controlled by its gate G. An n-type passes the source S when G is 1. A p-type passes it when G is 0. When closed off, the output floats.
+
+- In code: `trans`
+- Inputs: G, S
+- Outputs: D
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+  - `kind`: Type (n or p), default "n"
+
+```stutr
+g = input(1)
+s = input(1)
+t = trans(g, s, kind="n")
+y = output(t)
+```
+
+### Transmission gate
+
+Passes A to B when G is 1 and !G is 0. Otherwise B floats.
+
+- In code: `tgate`
+- Inputs: A, G, !G
+- Outputs: B
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+g = input(1)
+ng = input(0)
+t = tgate(a, g, ng)
+y = output(t)
+```
+
+### Bit extender
+
+Makes a value wider. The new top bits are filled with zeros, ones, or a copy of the sign (top) bit.
+
+- In code: `ext`
+- Inputs: In
+- Outputs: 1 unlabeled
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+  - `to`: Output bits, default 8
+  - `fill`: Fill (zero one sign), default "zero"
+
+```stutr
+a = input<4>(9)
+e = ext<4>(a, to=8, fill="sign")
+y = output<8>(e)
+```
+
+## Gates
+
+### NOT gate
+
+Flips every bit: 1 becomes 0 and 0 becomes 1.
+
+- In code: `not`
+- Inputs: 1 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+n = not(a)
+y = output(n)
+```
+
+### Buffer
+
+Passes its input through unchanged. Useful for tidy wiring.
+
+- In code: `buf`
+- Inputs: 1 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = buf(a)
+y = output(b)
+```
+
+### AND gate
+
+Outputs 1 only when both inputs are 1. For wider gates it works on each bit separately.
+
+- In code: `and`
+- Inputs: 2 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(0)
+g = and(a, b)
+y = output(g)
+```
+
+### OR gate
+
+Outputs 1 when at least one input is 1.
+
+- In code: `or`
+- Inputs: 2 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(0)
+g = or(a, b)
+y = output(g)
+```
+
+### NAND gate
+
+AND followed by NOT. Every other gate can be built from NANDs alone.
+
+- In code: `nand`
+- Inputs: 2 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(1)
+g = nand(a, b)
+y = output(g)
+```
+
+### NOR gate
+
+OR followed by NOT.
+
+- In code: `nor`
+- Inputs: 2 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(0)
+b = input(0)
+g = nor(a, b)
+y = output(g)
+```
+
+### XOR gate
+
+Outputs 1 when the inputs differ.
+
+- In code: `xor`
+- Inputs: 2 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(0)
+g = xor(a, b)
+y = output(g)
+```
+
+### XNOR gate
+
+Outputs 1 when the inputs are the same.
+
+- In code: `xnor`
+- Inputs: 2 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(1)
+g = xnor(a, b)
+y = output(g)
+```
+
+### Odd parity
+
+Outputs 1 when an odd number of its three inputs are 1.
+
+- In code: `odd`
+- Inputs: 3 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(1)
+c = input(1)
+p = odd(a, b, c)
+y = output(p)
+```
+
+### Even parity
+
+Outputs 1 when an even number of its three inputs are 1.
+
+- In code: `even`
+- Inputs: 3 unlabeled
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input(1)
+b = input(1)
+c = input(0)
+p = even(a, b, c)
+y = output(p)
+```
+
+### Controlled buffer
+
+Passes D through only while E is 1. While E is 0 the output floats (nothing drives the wire). This is how several parts share one bus.
+
+- In code: `cbuf`
+- Inputs: D, E
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+d = input<4>(7)
+e = input(1)
+cb = cbuf<4>(d, e)
+y = output<4>(cb)
+```
+
+### Controlled inverter
+
+Like the controlled buffer, but outputs the inverted value while E is 1.
+
+- In code: `cinv`
+- Inputs: D, E
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+d = input<4>(7)
+e = input(1)
+ci = cinv<4>(d, e)
+y = output<4>(ci)
+```
+
+## Plexers
+
+### Multiplexer
+
+Chooses one of two inputs. Output is input 0 when S is 0, and input 1 when S is 1.
+
+- In code: `mux`
+- Inputs: 0, 1, S
+- Outputs: 1 unlabeled
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input<4>(3)
+b = input<4>(9)
+s = input(1)
+m = mux<4>(a, b, s)
+y = output<4>(m)
+```
+
+### Demultiplexer
+
+Sends D to output 0 or output 1, depending on S. The other output is 0.
+
+- In code: `demux`
+- Inputs: D, S
+- Outputs: 0, 1
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+Refer to outputs as `.out0`, `.out1` or by number in square brackets.
+
+```stutr
+d = input<4>(5)
+s = input(1)
+dm = demux<4>(d, s)
+y0 = output<4>(dm.out0)
+y1 = output<4>(dm.out1)
+```
+
+### Decoder
+
+Turns a 2-bit number (S0 is the low bit) into four lines. Exactly one output is 1.
+
+- In code: `dec`
+- Inputs: S0, S1
+- Outputs: 0, 1, 2, 3
+
+Refer to outputs as `.out0`, `.out1`, `.out2`, `.out3` or by number in square brackets.
+
+```stutr
+s0 = input(1)
+s1 = input(0)
+dc = dec(s0, s1)
+y = output(dc.out1)
+```
+
+### Priority encoder
+
+Reports the highest-numbered input that is 1 as a 2-bit number (Y0 low bit). V is 1 when any input is 1.
+
+- In code: `penc`
+- Inputs: 0, 1, 2, 3
+- Outputs: Y0, Y1, V
+
+Refer to outputs as `.y0`, `.y1`, `.valid` or by number in square brackets.
+
+```stutr
+a = input(0)
+b = input(1)
+c = input(0)
+d = input(0)
+pe = penc(a, b, c, d)
+y = output(pe.y0)
+v = output(pe.valid)
+```
+
+### Bit selector
+
+Outputs a single bit of the input, chosen by the Sel number.
+
+- In code: `bsel`
+- Inputs: In, Sel
+- Outputs: 1 unlabeled
+- Default width: 8 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 8
+
+```stutr
+a = input<8>(0b10100000)
+i = input<3>(5)
+b = bsel<8>(a, i)
+y = output(b)
+```
+
+## Arithmetic
+
+### Adder
+
+Adds A and B plus a carry-in Ci. Outputs the sum and a carry-out. Numbers are unsigned and wrap around.
+
+- In code: `add`
+- Inputs: A, B, Ci
+- Outputs: S, Co
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+Refer to outputs as `.sum`, `.carry` or by number in square brackets.
+
+```stutr
+a = input<4>(7)
+b = input<4>(9)
+s = add<4>(a, b)
+sum = output<4>(s)
+co = output(s.carry)
+```
+
+### Subtractor
+
+Computes A minus B minus a borrow-in Bi. Outputs the difference and a borrow-out.
+
+- In code: `sub`
+- Inputs: A, B, Bi
+- Outputs: D, Bo
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+Refer to outputs as `.diff`, `.borrow` or by number in square brackets.
+
+```stutr
+a = input<4>(9)
+b = input<4>(7)
+d = sub<4>(a, b)
+diff = output<4>(d)
+bo = output(d.borrow)
+```
+
+### Multiplier
+
+Computes A times B plus Ci. The low half of the answer is the product and the high half is the carry output.
+
+- In code: `mul`
+- Inputs: A, B, Ci
+- Outputs: P, Co
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+Refer to outputs as `.product`, `.carry` or by number in square brackets.
+
+```stutr
+a = input<4>(6)
+b = input<4>(7)
+m = mul<4>(a, b)
+p = output<4>(m)
+hi = output<4>(m.carry)
+```
+
+### Divider
+
+Divides A by B and outputs the quotient and the remainder. Up supplies extra high bits of the dividend. Dividing by zero gives an all-ones quotient and a remainder of 0.
+
+- In code: `div`
+- Inputs: A, B, Up
+- Outputs: Q, R
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+Refer to outputs as `.quotient`, `.remainder` or by number in square brackets.
+
+```stutr
+a = input<4>(13)
+b = input<4>(3)
+d = div<4>(a, b)
+q = output<4>(d.quotient)
+r = output<4>(d.remainder)
+```
+
+### Negator
+
+Two's complement negative of the input.
+
+- In code: `neg`
+- Inputs: In
+- Outputs: 1 unlabeled
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+```stutr
+a = input<4>(3)
+n = neg<4>(a)
+y = output<4>(n)
+```
+
+### Comparator
+
+Compares A and B as unsigned numbers. Exactly one of the three outputs is 1.
+
+- In code: `cmp`
+- Inputs: A, B
+- Outputs: >, =, <
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+Refer to outputs as `.gt`, `.eq`, `.lt` or by number in square brackets.
+
+```stutr
+a = input<4>(5)
+b = input<4>(3)
+c = cmp<4>(a, b)
+gt = output(c.gt)
+eq = output(c.eq)
+lt = output(c.lt)
+```
+
+### Shifter
+
+Shifts or rotates the input by Sh places. Modes: `ll` logical left, `lr` logical right, `ar` arithmetic right (keeps the sign), `rl` rotate left, `rr` rotate right.
+
+- In code: `shift`
+- Inputs: In, Sh
+- Outputs: 1 unlabeled
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+  - `mode`: Mode (ll lr ar rl rr), default "ll"
+
+```stutr
+a = input<4>(0b0110)
+n = input<2>(1)
+sh = shift<4>(a, n, mode="lr")
+y = output<4>(sh)
+```
+
+### Bit adder
+
+Counts how many bits are 1 across its three inputs.
+
+- In code: `badd`
+- Inputs: 0, 1, 2
+- Outputs: N
+- Default width: 1 bit
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+```stutr
+a = input<4>(0b1011)
+b = input<4>(0b0001)
+c = input<4>(0)
+n = badd<4>(a, b, c)
+y = output<4>(n)
+```
+
+### Bit finder
+
+Finds the position of the lowest or highest bit that is 1 (or 0). Found is 1 when there is one. Modes: `low1`, `high1`, `low0`, `high0`.
+
+- In code: `bfind`
+- Inputs: In
+- Outputs: Idx, P
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+  - `find`: Find (low1 high1 low0 high0), default "low1"
+
+Refer to outputs as `.index`, `.found` or by number in square brackets.
+
+```stutr
+a = input<4>(0b0100)
+f = bfind<4>(a, find="low1")
+idx = output<2>(f.index)
+ok = output(f.found)
+```
+
+## Memory
+
+### D flip-flop
+
+Stores its input D on each rising clock edge. Q is the stored value and !Q is its opposite.
+
+- In code: `dff`
+- Inputs: D, >
+- Outputs: Q, !Q
+- Default width: 1 bit
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+Refer to outputs as `.q`, `.nq` or by number in square brackets.
+
+```stutr
+d = input(1)
+ck = clock()
+ff = dff(d, ck)
+q = output(ff.q)
+nq = output(ff.nq)
+```
+
+### T flip-flop
+
+Flips its stored value on a rising clock edge when T is 1. Wired to 1 it divides the clock frequency by two.
+
+- In code: `tff`
+- Inputs: T, >
+- Outputs: Q, !Q
+- Default width: 1 bit
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+Refer to outputs as `.q`, `.nq` or by number in square brackets.
+
+```stutr
+t = input(1)
+ck = clock()
+ff = tff(t, ck)
+q = output(ff.q)
+```
+
+### J-K flip-flop
+
+On a rising edge: J=1 sets it, K=1 clears it, both 1 flips it, both 0 holds it.
+
+- In code: `jkff`
+- Inputs: J, >, K
+- Outputs: Q, !Q
+- Default width: 1 bit
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+Refer to outputs as `.q`, `.nq` or by number in square brackets.
+
+```stutr
+j = input(1)
+k = input(0)
+ck = clock()
+ff = jkff(j, ck, k)
+q = output(ff.q)
+```
+
+### S-R flip-flop
+
+On a rising edge: S=1 sets it, R=1 clears it.
+
+- In code: `srff`
+- Inputs: S, >, R
+- Outputs: Q, !Q
+- Default width: 1 bit
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 1
+
+Refer to outputs as `.q`, `.nq` or by number in square brackets.
+
+```stutr
+s = input(1)
+r = input(0)
+ck = clock()
+ff = srff(s, ck, r)
+q = output(ff.q)
+```
+
+### Register
+
+Stores a multi-bit value on each rising clock edge.
+
+- In code: `reg` (also `register`)
+- Inputs: D, >
+- Outputs: Q
+- Default width: 4 bits
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+```stutr
+d = input<4>(9)
+ck = clock()
+r = register<4>(d, ck)
+y = output<4>(r)
+```
+
+### Counter
+
+Adds one on every rising clock edge and wraps back to 0 after its largest value.
+
+- In code: `ctr` (also `counter`)
+- Inputs: >
+- Outputs: Q
+- Default width: 2 bits
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 2
+
+```stutr
+ck = clock()
+c = counter<4>(ck)
+y = output<4>(c)
+```
+
+### Shift register
+
+A chain of stages. Each clock edge moves values one stage along. The output is the value from the last stage, so it appears after as many clocks as there are stages.
+
+- In code: `shreg`
+- Inputs: In, >
+- Outputs: 1 unlabeled
+- Default width: 4 bits
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+  - `stages`: Stages, default 4
+
+```stutr
+d = input<4>(5)
+ck = clock()
+sr = shreg<4>(d, ck, stages=3)
+y = output<4>(sr)
+```
+
+### Random generator
+
+Produces a new pseudo-random number on every rising clock edge.
+
+- In code: `rnd`
+- Inputs: >
+- Outputs: 1 unlabeled
+- Default width: 4 bits
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+```stutr
+ck = clock()
+r = rnd<4>(ck)
+y = output<4>(r)
+```
+
+### RAM
+
+Memory you can write and read. When WE is 1, a rising clock edge stores D at address A. Q always shows what is stored at the current address (reading needs no clock). Contents are not saved with the circuit.
+
+- In code: `ram`
+- Inputs: A, D, WE, >
+- Outputs: Q
+- Default width: 4 bits
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+  - `addr`: Address bits, default 4
+
+```stutr
+a = input<4>(3)
+d = input<4>(9)
+we = input(1)
+ck = clock()
+m = ram<4>(a, d, we, ck, addr=4)
+y = output<4>(m)
+```
+
+### ROM
+
+Read-only memory. List its contents as hexadecimal words separated by spaces in the `data` setting. Word 0 comes first.
+
+- In code: `rom`
+- Inputs: A
+- Outputs: D
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+  - `addr`: Address bits, default 4
+  - `data`: Contents (hex words)
+
+```stutr
+a = input<4>(1)
+r = rom<4>(a, addr=4, data="3 a f")
+y = output<4>(r)
+```
+
+## Input and output
+
+### Button
+
+Outputs 1 while you hold it down with the Poke tool and 0 when you let go.
+
+- In code: `button` (also `btn`)
+- Inputs: none
+- Outputs: 1 unlabeled
+
+```stutr
+b = button()
+l = led(b)
+```
+
+### Joystick
+
+Drag inside it with the Poke tool to set X and Y. It rests in the middle.
+
+- In code: `joystick` (also `joy`)
+- Inputs: none
+- Outputs: X, Y
+- Default width: 4 bits
+- Settings:
+  - `bits` (also written `<bits>`): data width, 1 to 16, default 4
+
+Refer to outputs as `.x`, `.y` or by number in square brackets.
+
+```stutr
+j = joystick<4>()
+x = output<4>(j.x)
+y = output<4>(j.y)
+```
+
+### Keyboard
+
+Type while it is selected and the characters queue up. Each rising clock edge moves to the next character. Ch is the 7-bit ASCII code and Av is 1 when a character is waiting.
+
+- In code: `keyboard` (also `keyb`)
+- Inputs: >
+- Outputs: Ch, Av
+
+Refer to outputs as `.char`, `.ready` or by number in square brackets.
+
+```stutr
+ck = clock()
+k = keyboard(ck)
+c = output<7>(k.char)
+av = output(k.ready)
+```
+
+### LED
+
+A light that is on when its input is 1.
+
+- In code: `led`
+- Inputs: 1 unlabeled
+- Outputs: none
+
+```stutr
+a = input(1)
+l = led(a)
+```
+
+### 7-segment display
+
+Seven inputs, one for each segment (a to g). A segment lights when its input is 1.
+
+- In code: `seg7`
+- Inputs: a, b, c, d, e, f, g
+- Outputs: none
+
+```stutr
+one = constant(1)
+zero = constant(0)
+disp = seg7(one, one, one, one, one, one, zero)
+```
+
+### Hex digit display
+
+Shows a 4-bit number as a hexadecimal digit, 0 to F.
+
+- In code: `hex`
+- Inputs: D
+- Outputs: none
+
+```stutr
+v = input<4>(10)
+h = hex(v)
+```
+
+### LED matrix
+
+A grid of LEDs driven by scanning. A light at column k and row r is on when bit k of C and bit r of R are both 1. Show a picture by switching rows quickly one after another. See the LED screen guide.
+
+- In code: `matrix`
+- Inputs: C, R
+- Outputs: none
+- Default width: 5 bits
+- Settings:
+  - `bits` (also written `<bits>`): Columns, 1 to 16, default 5
+  - `rows`: Rows, default 7
+
+```stutr
+c = input<5>(0b10101)
+r = input<7>(0b1111111)
+m = matrix<5>(c, r, rows=7)
+```
+
+### TTY (terminal)
+
+A small text terminal. On each rising clock edge it adds the character whose 7-bit ASCII code is on D. Code 8 deletes the last character and 13 or 10 starts a new line.
+
+- In code: `tty`
+- Inputs: D, >
+- Outputs: none
+- Clocked: Acts on the rising edge of its clock pin
+
+```stutr
+d = input<7>(65)
+ck = clock()
+t = tty(d, ck)
+```
+
+### LED screen
+
+One part that holds a whole picture, up to 2048 by 2048 pixels, shown as solid square pixels like a monitor. A circuit draws on it with X, Y, D, WE and a clock, and you can also paint on it by hand. Read the LED screen guide.
+
+- In code: `screen`
+- Inputs: X, Y, D, WE, CLR, >
+- Outputs: none
+- Default width: 3 bits
+- Clocked: Acts on the rising edge of its clock pin
+- Settings:
+  - `bits` (also written `<bits>`): Color bits, 1 to 16, default 3
+  - `width`: Width, default 16, 1 to 2048
+  - `height`: Height, default 16, 1 to 2048
+  - `color`: Color (hex), default "#ff5470"
+
+```stutr
+ck = clock()
+n = counter<6>(ck)
+sp = split<6>(n)
+x = merge<3>(sp[0], sp[1], sp[2])
+y = merge<3>(sp[3], sp[4], sp[5])
+d = xor<3>(x, y)
+we = constant(1)
+scr = screen<3>(x, y, d, we, None, ck, width=8, height=8)
+```
+
+## Notes
+
+### Text note
+
+A label you can place anywhere to explain your circuit. It does nothing in the simulation.
+
+- In code: `text`
+- Inputs: none
+- Outputs: none
+- Settings:
+  - `text`: Text, default "text"
+
+```stutr
+note = text("my circuit")
+```
+
+<!-- https://stutr.nuxply.com/docs/led-screen -->
+
+# LED screen guide
+
+> Build Stutr LED screens from 1 by 1 to 2048 by 2048 pixels: draw from a circuit, paint by hand, import pictures, choose colors, and use the LED matrix.
+
+## One part, any size
+
+The LED screen is a single part that holds a whole picture, so a screen of 800 by 800 (640,000 pixels) is as light as a screen of 8 by 8. Sizes go from 1 by 1 up to 2048 by 2048. Pixels are solid squares with no gaps, like a monitor.
+
+Place it from the menu (LED screen) or the Input and output group, set its size, and you can use it in two ways: draw on it from a circuit, or paint on it by hand.
+
+## Pins
+
+| Pin | Meaning |
+| --- | --- |
+| X | Column to write, counted from 0 on the left. Its width fits the screen automatically. |
+| Y | Row to write, counted from 0 at the top. |
+| D | The color value to store. Its width is the color bits setting. |
+| WE | Write enable. A pixel is written only while WE is 1. |
+| CLR | When 1 on a clock edge, the whole screen is cleared to black. |
+| Clock | Writing happens on its rising edge. |
+
+On every rising clock edge, if WE is 1 and X and Y are inside the screen, the pixel at X, Y is set to D. Writes outside the screen are ignored. The screen is an output only: it has no output pins.
+
+```stutr
+ck = clock()
+n = counter<6>(ck)
+sp = split<6>(n)
+x = merge<3>(sp[0], sp[1], sp[2])
+y = merge<3>(sp[3], sp[4], sp[5])
+d = xor<3>(x, y)
+we = constant(1)
+scr = screen<3>(x, y, d, we, None, ck, width=8, height=8)
+```
+
+This counter visits all 64 pixels of an 8 by 8 screen and colors each one by x XOR y.
+
+## Colors
+
+The Color bits setting decides what D means. Red is stored in the high bits, then green, then blue.
+
+| Color bits | Colors | Layout (red, green, blue bits) |
+| --- | --- | --- |
+| 1 | Off or on, in the screen's LED color | - |
+| 2 | Four brightness levels of the LED color | - |
+| 3 | 8 colors | 1, 1, 1 |
+| 4 | 16 colors | 2, 1, 1 |
+| 6 | 64 colors | 2, 2, 2 |
+| 8 | 256 colors | 3, 3, 2 |
+| 12 | 4,096 colors | 4, 4, 4 |
+| 16 | 65,536 colors | 6, 5, 5 |
+
+Other widths from 1 to 16 work too. Set the LED color with `color="#rrggbb"` or the Color field in the panel. It is used for the 1 and 2 bit modes and as the starting paint color.
+
+## Painting by hand
+
+Double-click the screen, press the small expand button in its corner, or use Open screen in its panel. The big view lets you:
+
+- **Size**: choose 8, 16, 32, 64, 128, 256, 512, 800, 1024 or 2048, or type any width and height and press Apply. Resizing keeps the pixels that still fit.
+- **Colors**: pick the number of colors.
+- **Zoom**: Fit the window, or 1 to 16 times.
+- **Paint** with a color picker, a brush size, and an eraser. Drag to draw. Fast strokes leave no gaps.
+- **Clear** and **Fill**.
+- **Make** patterns: Checker, Gradient, Bars, Noise.
+- **Import picture** from an image file. It is fitted to the screen with black bars if the shape differs, and reduced to the screen's colors.
+- **Save PNG** to keep your artwork.
+
+## Good to know
+
+- Pixels are not saved with the circuit code. Editing the code keeps them, but reloading the page clears them. Use Save PNG for pictures you want to keep.
+- Painting cannot be undone with Ctrl+Z.
+- A circuit writes one pixel per clock edge, and the fastest clock is 100 Hz, so a circuit can draw about 100 pixels per second. That suits patterns and slow animation. Paint and import are the fast way to fill large screens.
+- A screen is wider than it looks on the canvas: the canvas shows a small preview, and the big view shows every pixel.
+
+## The LED matrix
+
+The LED matrix is a small grid of separate LEDs (up to 16 columns by 16 rows) that works the way real LED matrices do. Input C has one bit per column and input R has one bit per row. The LED at column k and row r is on when bit k of C and bit r of R are both 1.
+
+That means you cannot light an arbitrary picture in one go. You show one row at a time, very quickly, and your eyes blend them. Use the counter and decoder parts to step through the rows. For pictures, use the LED screen instead.
+
+```stutr
+c = input<5>(0b10101)
+r = input<7>(0b1111111)
+m = matrix<5>(c, r, rows=7)
+```
+
+<!-- https://stutr.nuxply.com/docs/examples -->
+
+# Examples
+
+> Ready-made Stutr circuits you can open and run: half adder, full adder, 4-bit adder, counter, clock divider, RAM, a 4-bit CPU and an LED screen.
+
+## Opening an example
+
+In the editor choose Examples from the menu and press Open on any circuit below. The code is shown here too, so you can read it or paste it into the Code tab.
+
+## Mini CPU
+
+4-bit accumulator CPU with a program in ROM. Press Run to start its clock.
+
+```stutr
+# ===== Mini CPU: 4-bit accumulator machine. Press Run: each clock cycle runs one instruction =====
+ck = clock()
+
+# program counter: register + incrementer + jump mux
+pc   = register<4>(npc, ck)
+one  = constant<4>(1)
+inc  = add<4>(pc, one)
+npc  = mux<4>(inc, imm, take)
+
+# program memory: opcodes and operands, address = pc
+opm  = rom<4>(pc, addr=4, data="1 7 7 7 7 1 3 9 2 6 8 0 0 0 0 0")
+imm  = rom<4>(pc, addr=4, data="1 0 0 0 0 5 1 6 3 5 0 0 0 0 0 0")
+op   = split<4>(opm)
+
+# ALU: every operation is computed, the opcode bits pick one
+sh1  = constant<2>(1)
+shl  = shift<4>(acc, sh1, mode="ll")
+sum  = add<4>(acc, imm)
+dif  = sub<4>(acc, imm)
+aa   = and<4>(acc, imm)
+oo   = or<4>(acc, imm)
+xx   = xor<4>(acc, imm)
+m0   = mux<4>(acc, imm, op[0])
+m1   = mux<4>(sum, dif, op[0])
+m2   = mux<4>(aa, oo, op[0])
+m3   = mux<4>(xx, shl, op[0])
+n0   = mux<4>(m0, m1, op[1])
+n1   = mux<4>(m2, m3, op[1])
+alu  = mux<4>(n0, n1, op[2])
+nacc = mux<4>(alu, acc, op[3])
+acc  = register<4>(nacc, ck)
+
+# jump unit: opcode 8 = JMP, 9 = JNZ (jump if acc is not 0)
+zero = ground<4>()
+zc   = cmp<4>(acc, zero)
+nz   = not(zc.eq)
+no0  = not(op[0])
+jnz  = and(op[0], nz)
+sel  = or(no0, jnz)
+take = and(op[3], sel)
+
+# displays
+ACC  = output<4>(acc)
+hexa = hex(acc)
+PC   = output<4>(pc)
+hexp = hex(pc)
+```
+
+## 4-bit adder
+
+Buses: change the bit width of any part in the panel.
+
+```stutr
+A = input<4>(5)
+B = input<4>(3)
+s = add<4>(A, B)
+Sum = output<4>(s.sum)
+Carry = output(s.carry)
+```
+
+## RAM write and read
+
+Set WE to 1, press Run or poke the clock to store D at address A.
+
+```stutr
+A = input<3>(2)
+D = input<4>(9)
+WE = input(1)
+ck = clock()
+r = ram<4>(A, D, WE, ck, addr=3)
+Q = output<4>(r)
+```
+
+## Clock divider
+
+The flip-flop toggles on every rising edge.
+
+```stutr
+ck = clock()
+f = dff(f.nq, ck)
+Q = output(f)
+```
+
+## 2-bit counter
+
+Counts 0 to 3 while the clock runs.
+
+```stutr
+ck = clock()
+c = counter<2>(ck)
+Q = output<2>(c)
+```
+
+## Half adder
+
+Adds two bits: XOR is the sum, AND is the carry.
+
+```stutr
+A = input(1)
+B = input(1)
+s = xor(A, B)
+c = and(A, B)
+Sum = output(s)
+Carry = output(c)
+```
+
+## Full adder
+
+Adds two bits plus a carry-in.
+
+```stutr
+A = input(1)
+B = input(0)
+Cin = input(1)
+x = xor(A, B)
+s = xor(x, Cin)
+a1 = and(A, B)
+a2 = and(x, Cin)
+co = or(a1, a2)
+Sum = output(s)
+Cout = output(co)
+```
+
+## XOR from NANDs
+
+Four NAND gates behave like one XOR.
+
+```stutr
+A = input(1)
+B = input(0)
+n1 = nand(A, B)
+n2 = nand(A, n1)
+n3 = nand(B, n1)
+n4 = nand(n2, n3)
+Y = output(n4)
+```
+
+## Majority vote
+
+Output is 1 when at least two inputs are 1.
+
+```stutr
+A = input(1)
+B = input(1)
+C = input(0)
+ab = and(A, B)
+bc = and(B, C)
+ac = and(A, C)
+t = or(ab, bc)
+m = or(t, ac)
+Y = output(m)
+```
+
+## LED screen (8x8)
+
+A counter visits every pixel and x XOR y picks its color. Press Run, or open the screen to paint on it.
+
+```stutr
+# an 8x8 screen: X, Y, D, WE, CLR, clock. Raise width and height for a bigger one (up to 2048)
+ck = clock()
+n = counter<6>(ck)
+sp = split<6>(n)
+x = merge<3>(sp[0], sp[1], sp[2])
+y = merge<3>(sp[3], sp[4], sp[5])
+d = xor<3>(x, y)
+we = constant(1)
+scr = screen<3>(x, y, d, we, None, ck, width=8, height=8)
+```
+
+<!-- https://stutr.nuxply.com/docs/account -->
+
+# Accounts, saving and plans
+
+> How saving works in Stutr, signing in, exporting or deleting your data, the Free, Pro, Student, Classroom and Founder plans, and managing billing.
+
+## Saving your work
+
+- **Without an account**, your latest circuit and your projects are kept in this browser only.
+- **With an account**, they are stored online and follow you to any device. Sign in with GitHub or Google from the login page.
+- **Autosave** keeps the latest circuit so the editor reopens where you left off. You can turn it off in Settings.
+- **Projects** are named copies you save on purpose. Use the Projects panel to save, open or delete them.
+- **Export code** downloads `circuit.stutr.txt`. **Settings, Export my data** downloads everything you have saved as a file.
+- Settings also lets you delete all your saved data. This cannot be undone.
+
+See the [privacy policy](/privacy) for what is stored and why.
+
+## Plans
+
+Stutr is free to use. Paid plans add convenience and, as they are built, more features. See [Pricing](/pricing) for current prices.
+
+| Plan | For | What it is |
+| --- | --- | --- |
+| Free | Learning and building | The core parts, code and canvas in sync, and saving in your browser or account. |
+| Pro | Serious builders | Everything in Free plus the paid features as they arrive: unlimited projects, cloud sync across devices, advanced components, exports and history. |
+| Student | Students with a school email | The same as Pro at a lower price. Needs an account whose email ends in .edu, .edu.xx or .ac.xx. |
+| Classroom | Teachers and schools | Class tools for many students. Coming soon. |
+| Founder | Early supporters | Pro for life, paid once. |
+
+> **Note:** Some paid features are still being built. The pricing page says which plans can be bought today.
+
+## Your profile and plan
+
+Open the menu and choose Profile and plan, or click your name at the bottom of the menu. You will see your account, your current plan and its status:
+
+- **Active**: your plan is on, with the date it renews.
+- **Ends on a date**: you cancelled, and your access continues until that date.
+- **Lifetime**: the Founder plan has no renewal.
+- **Free**: no paid plan yet, with a link to the plans.
+
+The **Manage billing** button opens a secure page from our payment provider, Polar. There you can change your plan between monthly and yearly, cancel, update your card and download invoices. Changes appear in your profile within a minute.

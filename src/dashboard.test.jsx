@@ -164,4 +164,12 @@ describe('menu, projects and new circuit', () => {
     expect(scale()).toBeGreaterThan(before)
     t('pointerup', 1, 100); t('pointerup', 2, 300)
   })
+
+  it('the profile panel asks guests to sign in and links to the plans', () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: /Profile & plan/ }))
+    const dialog = screen.getByRole('dialog', { name: /Profile and plan/ })
+    expect(within(dialog).getByText(/not signed in/i)).toBeTruthy()
+    expect(within(dialog).getByRole('link', { name: /See plans/ }).getAttribute('href')).toBe('/pricing')
+  })
 })

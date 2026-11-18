@@ -7,6 +7,7 @@ export default function Nav({ home = false }) {
       <nav className="lp-links" aria-label="Main">
         {home && <a href="#how" className="hide-sm">How it works</a>}
         {home && <a href="#lab" className="hide-sm">Hardware lab</a>}
+        <Link to="/docs" className="hide-sm">Docs</Link>
         <Link to="/pricing">Pricing</Link>
         <Link to="/faq" className="hide-sm">FAQ</Link>
         <Link to="/start" className="pill">Start Building</Link>
