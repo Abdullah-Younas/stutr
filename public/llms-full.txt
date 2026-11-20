@@ -72,7 +72,6 @@ Every part has a name, and the name is how code and wires refer to it. Rename a 
 - Widths are 1 to 16 bits.
 - A combinational loop (a wire feeding back into its own logic without a flip-flop) reads as floating. Use a flip-flop to build memory.
 - Memory contents (RAM, registers and so on) and LED screen pixels are not saved in the circuit code.
-- There are no subcircuits yet.
 
 <!-- https://stutr.nuxply.com/docs/language -->
 
@@ -195,6 +194,25 @@ A few parts have friendlier words in code. Both forms work when you type, but th
 | Register | `reg` | `register` |
 | Counter | `ctr` | `counter` |
 
+## Using a saved circuit as a part
+
+Any circuit you have saved in Projects can be used as a part in another circuit. Its name becomes the word you write, spelled in lowercase with underscores (a project called "Half Adder" is `half_adder`). The input and output pins inside it become the part's pins, in the order they appear in its code, and the pins use the names you gave them.
+
+```text
+# half_adder is a saved circuit with inputs a, b and outputs sum, carry
+x = input(1)
+y = input(1)
+u = half_adder(x, y)
+s = output(u.sum)
+c = output(u.carry)
+```
+
+- Refer to a chip's outputs by the names of its output pins: `u.sum` and `u.carry`, or by number.
+- A chip keeps its own memory: a counter or flip-flop inside it holds its value between clock edges.
+- A chip can contain other chips, but never itself.
+- Inside a chip, use an input pin for the clock, not a clock part, so the outer circuit controls the timing.
+- Using chips as parts is part of the Pro plan. Circuits that already use them still open and run on any plan.
+
 ## Where parts go
 
 Code has no coordinates. A part keeps its place on the canvas as long as its name and type stay the same. New parts are placed automatically, left to right by how many steps they are from an input. Drag them wherever you like. Moving things on the canvas never changes the code.
@@ -287,16 +305,41 @@ Select several parts with the Select tool and the panel offers Delete all.
 | Drag empty space | Pan |
 | Two fingers (touch) | Pinch to zoom and drag to pan |
 
+## Your circuits as parts
+
+Save a circuit in Projects, then open Parts and tools and look under My circuits. Pick one and click the canvas to place it as a single part. Its input and output pins become the part's pins. Change the saved circuit and open the other circuit again to use the new version. See [the language guide](/docs/language) for how chips look in code.
+
+Using your circuits as parts is part of the Pro plan.
+
+## Version history
+
+Every time you save a project with changes, Stutr keeps that version. The last 20 versions of each project are kept. In Projects press History next to a project, then Open this version to load an earlier one. Save again to make it the current version. Version history is part of the Pro plan.
+
+## Exporting
+
+| Export | What you get | Plan |
+| --- | --- | --- |
+| Circuit code | The circuit as text (`circuit.stutr.txt`). | Free |
+| Picture (PNG) | An image of the whole canvas, for reports and slides. | Pro |
+| Netlist | Every part and every connection as readable text. | Pro |
+| Verilog | Hardware description code for the common parts: pins, gates, multiplexers, adders, comparators, splitters, extenders, flip-flops, registers and counters, plus chips as their own modules. Parts it cannot export are listed in comments at the top and their outputs are left undriven, so check the file before using it. | Pro |
+
+Open Export from the menu to choose one.
+
+## Themes
+
+The default theme is Midnight. Pro adds Terminal (green), Ember (orange) and Violet. Choose one in Settings.
+
 ## The menu
 
 | Item | What it does |
 | --- | --- |
-| Projects | Save the current circuit under a name, open or delete saved ones. |
+| Projects | Save the current circuit under a name, open or delete saved ones, and open earlier versions. |
 | Create | Start a new empty circuit. Undo brings the old one back. |
 | Parts and tools | Every tool and part, grouped. |
 | Examples | Ready-made circuits to open and learn from. |
 | LED screen | Picks the LED screen part to place. |
-| Export code | Downloads the circuit as `circuit.stutr.txt`. |
+| Export | Download the circuit as code, a picture, a netlist or Verilog. |
 | Documentation | A quick reference and a link to these docs. |
 | Settings | Editor options, privacy and your data. |
 | Profile and plan | Your account, your plan and billing. |
@@ -306,7 +349,7 @@ Select several parts with the Select tool and the panel offers Delete all.
 
 - Snap to grid: parts jump to a 20 px grid.
 - Show the grid, pin labels and part names.
-- Wire style: right angles or straight lines.
+- Theme and wire style: right angles or straight lines.
 - Autosave my circuit: reopens where you left off.
 - Confirm before starting a new circuit.
 - Analytics: off unless you allow it.
@@ -1722,13 +1765,13 @@ Stutr is free to use. Paid plans add convenience and, as they are built, more fe
 
 | Plan | For | What it is |
 | --- | --- | --- |
-| Free | Learning and building | The core parts, code and canvas in sync, and saving in your browser or account. |
-| Pro | Serious builders | Everything in Free plus the paid features as they arrive: unlimited projects, cloud sync across devices, advanced components, exports and history. |
+| Free | Learning and building | Every part, the code editor and canvas in sync, up to 5 saved projects (in your browser or your account), LED screens up to 64 by 64, and the example circuits. |
+| Pro | Serious builders | Everything in Free plus unlimited projects, your own circuits as parts, LED screens up to 2048 by 2048, version history, export to PNG, netlist and Verilog, extra themes, and early access to Hardware Lab when it launches. |
 | Student | Students with a school email | The same as Pro at a lower price. Needs an account whose email ends in .edu, .edu.xx or .ac.xx. |
 | Classroom | Teachers and schools | Class tools for many students. Coming soon. |
 | Founder | Early supporters | Pro for life, paid once. |
 
-> **Note:** Some paid features are still being built. The pricing page says which plans can be bought today.
+Limits apply only to the Free plan. If a paid plan ends, your circuits and projects stay yours: you can still open, run and export the code of everything you made.
 
 ## Your profile and plan
 

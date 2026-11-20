@@ -36,7 +36,7 @@ export const partFacts = (type) => {
     clocked: !!d.seq && type !== 'KEYB',
   }
 }
-export const ALL_PARTS = Object.keys(DEFS).map(partFacts)
+export const ALL_PARTS = Object.keys(DEFS).filter((t) => t !== 'CHIP').map(partFacts) // a chip is made by you, so it has its own guide section
 
 const partBlocks = () => CATEGORIES.map((cat) => {
   const items = ALL_PARTS.filter((f) => f.category === cat)
@@ -69,7 +69,7 @@ const RAW = [
         h('Names'),
         p('Every part has a name, and the name is how code and wires refer to it. Rename a part in its panel, with the Label tool, or by changing the name in the code. Names use letters, digits and underscores, cannot start with a digit, and must be unique.'),
         h('Limits'),
-        list('Widths are 1 to 16 bits.', 'A combinational loop (a wire feeding back into its own logic without a flip-flop) reads as floating. Use a flip-flop to build memory.', 'Memory contents (RAM, registers and so on) and LED screen pixels are not saved in the circuit code.', 'There are no subcircuits yet.')),
+        list('Widths are 1 to 16 bits.', 'A combinational loop (a wire feeding back into its own logic without a flip-flop) reads as floating. Use a flip-flop to build memory.', 'Memory contents (RAM, registers and so on) and LED screen pixels are not saved in the circuit code.')),
     ],
   },
   {
@@ -106,6 +106,10 @@ const RAW = [
       S('aliases', 'Other names for parts',
         p('A few parts have friendlier words in code. Both forms work when you type, but the editor writes the first form.'),
         table(['Part', 'Code word', 'Also accepted'], Object.entries(PREF).map(([t, k]) => [PARTS[t][1], '`' + k + '`', '`' + t.toLowerCase() + '`']).concat([['Splitter', '`split`', '`splitter`'], ['Combiner', '`merge`', '`combiner`'], ['Register', '`reg`', '`register`'], ['Counter', '`ctr`', '`counter`']]))),
+      S('chips', 'Using a saved circuit as a part',
+        p('Any circuit you have saved in Projects can be used as a part in another circuit. Its name becomes the word you write, spelled in lowercase with underscores (a project called "Half Adder" is `half_adder`). The input and output pins inside it become the part\'s pins, in the order they appear in its code, and the pins use the names you gave them.'),
+        code(L('# half_adder is a saved circuit with inputs a, b and outputs sum, carry', 'x = input(1)', 'y = input(1)', 'u = half_adder(x, y)', 's = output(u.sum)', 'c = output(u.carry)'), 'text'),
+        list('Refer to a chip\'s outputs by the names of its output pins: `u.sum` and `u.carry`, or by number.', 'A chip keeps its own memory: a counter or flip-flop inside it holds its value between clock edges.', 'A chip can contain other chips, but never itself.', 'Inside a chip, use an input pin for the clock, not a clock part, so the outer circuit controls the timing.', 'Using chips as parts is part of the Pro plan. Circuits that already use them still open and run on any plan.')),
       S('layout', 'Where parts go',
         p('Code has no coordinates. A part keeps its place on the canvas as long as its name and type stay the same. New parts are placed automatically, left to right by how many steps they are from an input. Drag them wherever you like. Moving things on the canvas never changes the code.')),
       S('errors', 'When something is wrong',
@@ -158,15 +162,30 @@ const RAW = [
           ['`P` `E` `S` `X`', 'Poke, Edit, Select, Erase'], ['`T` `M` `L`', 'Text, Menu, Label'], ['Hold `D`', 'Erase while held: click a wire or part'], ['`Delete`', 'Remove the selection'], ['`Esc`', 'Back to Poke'],
           ['`Ctrl+Z`', 'Undo'], ['`Ctrl+Y` or `Ctrl+Shift+Z`', 'Redo'], ['Mouse wheel', 'Zoom'], ['Drag empty space', 'Pan'], ['Two fingers (touch)', 'Pinch to zoom and drag to pan'],
         ])),
+      S('chips', 'Your circuits as parts',
+        p('Save a circuit in Projects, then open Parts and tools and look under My circuits. Pick one and click the canvas to place it as a single part. Its input and output pins become the part\'s pins. Change the saved circuit and open the other circuit again to use the new version. See [the language guide](/docs/language) for how chips look in code.'),
+        p('Using your circuits as parts is part of the Pro plan.')),
+      S('history', 'Version history',
+        p('Every time you save a project with changes, Stutr keeps that version. The last 20 versions of each project are kept. In Projects press History next to a project, then Open this version to load an earlier one. Save again to make it the current version. Version history is part of the Pro plan.')),
+      S('export', 'Exporting',
+        table(['Export', 'What you get', 'Plan'], [
+          ['Circuit code', 'The circuit as text (`circuit.stutr.txt`).', 'Free'],
+          ['Picture (PNG)', 'An image of the whole canvas, for reports and slides.', 'Pro'],
+          ['Netlist', 'Every part and every connection as readable text.', 'Pro'],
+          ['Verilog', 'Hardware description code for the common parts: pins, gates, multiplexers, adders, comparators, splitters, extenders, flip-flops, registers and counters, plus chips as their own modules. Parts it cannot export are listed in comments at the top and their outputs are left undriven, so check the file before using it.', 'Pro'],
+        ]),
+        p('Open Export from the menu to choose one.')),
+      S('themes', 'Themes',
+        p('The default theme is Midnight. Pro adds Terminal (green), Ember (orange) and Violet. Choose one in Settings.')),
       S('menu', 'The menu',
         table(['Item', 'What it does'], [
-          ['Projects', 'Save the current circuit under a name, open or delete saved ones.'], ['Create', 'Start a new empty circuit. Undo brings the old one back.'], ['Parts and tools', 'Every tool and part, grouped.'],
-          ['Examples', 'Ready-made circuits to open and learn from.'], ['LED screen', 'Picks the LED screen part to place.'], ['Export code', 'Downloads the circuit as `circuit.stutr.txt`.'],
+          ['Projects', 'Save the current circuit under a name, open or delete saved ones, and open earlier versions.'], ['Create', 'Start a new empty circuit. Undo brings the old one back.'], ['Parts and tools', 'Every tool and part, grouped.'],
+          ['Examples', 'Ready-made circuits to open and learn from.'], ['LED screen', 'Picks the LED screen part to place.'], ['Export', 'Download the circuit as code, a picture, a netlist or Verilog.'],
           ['Documentation', 'A quick reference and a link to these docs.'], ['Settings', 'Editor options, privacy and your data.'], ['Profile and plan', 'Your account, your plan and billing.'],
           ['Hardware lab', 'Arduino boards, breadboards, LEDs and jumper wires. Marked "soon": not available yet.'],
         ])),
       S('settings', 'Settings',
-        list('Snap to grid: parts jump to a 20 px grid.', 'Show the grid, pin labels and part names.', 'Wire style: right angles or straight lines.', 'Autosave my circuit: reopens where you left off.', 'Confirm before starting a new circuit.', 'Analytics: off unless you allow it.', 'Export my data as a file, and delete everything you have saved.')),
+        list('Snap to grid: parts jump to a 20 px grid.', 'Show the grid, pin labels and part names.', 'Theme and wire style: right angles or straight lines.', 'Autosave my circuit: reopens where you left off.', 'Confirm before starting a new circuit.', 'Analytics: off unless you allow it.', 'Export my data as a file, and delete everything you have saved.')),
     ],
   },
   {
@@ -227,13 +246,13 @@ const RAW = [
       S('plans', 'Plans',
         p('Stutr is free to use. Paid plans add convenience and, as they are built, more features. See [Pricing](/pricing) for current prices.'),
         table(['Plan', 'For', 'What it is'], [
-          ['Free', 'Learning and building', 'The core parts, code and canvas in sync, and saving in your browser or account.'],
-          ['Pro', 'Serious builders', 'Everything in Free plus the paid features as they arrive: unlimited projects, cloud sync across devices, advanced components, exports and history.'],
+          ['Free', 'Learning and building', 'Every part, the code editor and canvas in sync, up to 5 saved projects (in your browser or your account), LED screens up to 64 by 64, and the example circuits.'],
+          ['Pro', 'Serious builders', 'Everything in Free plus unlimited projects, your own circuits as parts, LED screens up to 2048 by 2048, version history, export to PNG, netlist and Verilog, extra themes, and early access to Hardware Lab when it launches.'],
           ['Student', 'Students with a school email', 'The same as Pro at a lower price. Needs an account whose email ends in .edu, .edu.xx or .ac.xx.'],
           ['Classroom', 'Teachers and schools', 'Class tools for many students. Coming soon.'],
           ['Founder', 'Early supporters', 'Pro for life, paid once.'],
         ]),
-        note('Some paid features are still being built. The pricing page says which plans can be bought today.')),
+        p('Limits apply only to the Free plan. If a paid plan ends, your circuits and projects stay yours: you can still open, run and export the code of everything you made.')),
       S('profile', 'Your profile and plan',
         p('Open the menu and choose Profile and plan, or click your name at the bottom of the menu. You will see your account, your current plan and its status:'),
         list('**Active**: your plan is on, with the date it renews.', '**Ends on a date**: you cancelled, and your access continues until that date.', '**Lifetime**: the Founder plan has no renewal.', '**Free**: no paid plan yet, with a link to the plans.'),

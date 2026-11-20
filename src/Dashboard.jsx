@@ -12,11 +12,16 @@ import { getConsent, setConsent } from './lib/consent'
 import { usePageMeta } from './lib/meta'
 import { EXAMPLES } from './examples'
 import {
-  mk, pop, W, NN, SW, SH, SMAX, TX, INS, OUTS, OW, shift, DEFS, dims, snap, pinIn, pinOut, NAME, START, sim, settle, M, clamp, gen, lit, parse,
+  mk, pop, W, NN, SW, SH, SMAX, TX, INS, chipFrom, chipName, OUTS, OW, shift, DEFS, dims, snap, pinIn, pinOut, NAME, START, sim, settle, M, clamp, gen, lit, parse,
 } from './engine'
 import { ScreenStudio, ScreenView } from './ScreenParts'
 import Profile from './Profile'
 import { resized } from './screen'
+import { supabase } from './lib/supabase'
+import { hasPaid } from '../supabase/functions/_shared/polar'
+import { FREE_PROJECTS, FREE_SCREEN, THEMES, unlocked } from './lib/gate'
+import { netlist, verilog } from './export'
+import { savePng } from './exportPng'
 
 /* ================= Code tab ================= */
 function CodeEditor({ code, onChange, err }) {
@@ -103,6 +108,7 @@ const frame = (c, d, w, h, v) => {
 const body = (c, d, w, h, ins, v, openScreen) => {
   const T = c.type
   if (GSHAPE.has(T)) return null // gates are fully drawn by frame()
+  if (T === 'CHIP') return <text className="chip-name" x={w / 2} y={h / 2 + 5} textAnchor="middle">{c.chip.name}</text>
   if (T === 'SCREEN') return <ScreenView c={c} w={w} h={h} onOpen={() => openScreen(c.id)} />
   if (T === 'IN' && W(c) === 1) {
     return (
@@ -164,7 +170,7 @@ const body = (c, d, w, h, ins, v, openScreen) => {
 const GRID = 40 // one square of the board, the same look as the landing page grid
 const wirePath = (x1, y1, x2, y2, style) => (style === 'straight' ? `M${x1} ${y1}L${x2} ${y2}` : `M${x1} ${y1}H${(x1 + x2) / 2}V${y2}H${x2}`)
 
-function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo, redo, canUndo, canRedo, openScreen }) {
+function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo, redo, canUndo, canRedo, openScreen, lib, allow, onNote }) {
   const { parts, wires } = circuit
   const [sels, setSels] = useState([])
   const [link, setLink] = useState(null) // a wire being dragged from a pin
@@ -282,6 +288,15 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
   const onCanvasDown = (e) => {
     setMenu(null)
     const [x, y] = point(e)
+    if (tool.startsWith('chip:')) {
+      if (!allow) return onNote('Using your circuits as parts is part of Pro. See Pricing.')
+      const name = tool.slice(5), chip = chipFrom(name, lib)
+      if (chip.error) return onNote(`"${name}" cannot be used as a part: ${chip.error}`)
+      const [w, h] = dims({ type: 'CHIP', chip }), id = fresh(name)
+      mark()
+      update((c) => ({ ...c, parts: [...c.parts, { id, type: 'CHIP', chip, x: sn(x - w / 2), y: sn(y - h / 2) }] }))
+      return setSels([id])
+    }
     if (DEFS[tool]) {
       const d = DEFS[tool], [w, h] = dims({ type: tool }), id = fresh(tool)
       mark()
@@ -394,7 +409,12 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
     update((m) => ({ ...m, wires: [...m.wires.filter((o) => !(o.to === w.to && o.pin === w.pin)), w] }))
   }
   // a new screen size keeps the pixels that still fit
-  const resize = (c, nw, nh) => { mark(true); patch(c.id, { n: nw, n2: nh, s: resized(c.s?.px && c.s.w === SW(c) && c.s.h === SH(c) ? c.s : null, nw, nh) }) }
+  const cap = allow ? SMAX : FREE_SCREEN
+  const resize = (c, nw, nh) => {
+    if (nw > cap || nh > cap) onNote(`Screens bigger than ${FREE_SCREEN} by ${FREE_SCREEN} are part of Pro. See Pricing.`)
+    nw = Math.min(nw, cap); nh = Math.min(nh, cap)
+    mark(true); patch(c.id, { n: nw, n2: nh, s: resized(c.s?.px && c.s.w === SW(c) && c.s.h === SH(c) ? c.s : null, nw, nh) })
+  }
   const num = (key, lo, hi) => (e) => { mark(true); patch(cur.id, { [key]: clamp(+e.target.value || lo, lo, hi) }) }
   const fan = {}
   wires.forEach((w) => { const k = w.from + ':' + (w.fp || 0); fan[k] = (fan[k] || 0) + 1 })
@@ -492,7 +512,7 @@ function Circuit({ circuit, update, tool, setTool, fitKey, settings, mark, undo,
         <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">Undo</button>
         <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)">Redo</button>
       </div>
-      <div className="hint">{HINTS[tool] || `Click the canvas to place ${tool}`}</div>
+      <div className="hint">{HINTS[tool] || (tool.startsWith('chip:') ? `Click the canvas to place your "${tool.slice(5)}" circuit as a part` : `Click the canvas to place ${tool}`)}</div>
 
       {menu && byId[menu.id] && (
         <div className="ctx" style={{ left: menu.x, top: menu.y }}>
@@ -602,7 +622,7 @@ const CATALOG = [
   ] },
 ]
 
-function ToolPicker({ tool, onPick }) {
+function ToolPicker({ tool, onPick, chips, locked }) {
   const [q, setQ] = useState('')
   return (
     <>
@@ -633,20 +653,37 @@ function ToolPicker({ tool, onPick }) {
           </section>
         )
       })}
+      <section>
+        <h4>My circuits{locked ? ' (Pro)' : ''}</h4>
+        {chips.length ? (
+          <div className="tiles">
+            {chips.filter((n) => n.includes(q.toLowerCase())).map((n) => (
+              <button key={n} type="button" className={`tile${tool === 'chip:' + n ? ' active' : ''}`} title={locked ? 'Using your circuits as parts is part of Pro' : n} onClick={() => onPick('chip:' + n)}>
+                <span className="glyph">chip</span><span>{n}</span>{locked && <small>Pro</small>}
+              </button>
+            ))}
+          </div>
+        ) : <p className="empty">Save a circuit in Projects and it shows up here as a part you can place in other circuits. Its input and output pins become the part's pins.</p>}
+      </section>
     </>
   )
 }
 
-function Projects({ code, store, onOpen }) {
+function Projects({ code, store, onOpen, onList, limit, history }) {
   const [list, setList] = useState(null)
+  const [open, setOpen] = useState('')
+  const [versions, setVersions] = useState(null)
+  const [full, setFull] = useState(false)
   const [name, setName] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const refresh = () => store.listProjects().then(setList).catch(() => setMsg('Could not load your projects.'))
+  const refresh = () => store.listProjects().then((l) => { setList(l); onList?.(l) }).catch(() => setMsg('Could not load your projects.'))
   useEffect(() => { refresh() }, [store])
   const save = async (e) => {
     e.preventDefault()
     const n = name.trim() || `Circuit ${(list?.length ?? 0) + 1}`
+    setFull(false)
+    if (limit != null && !(list || []).some((p) => p.name === n) && (list?.length ?? 0) >= limit) { setFull(true); return setMsg(`The Free plan holds ${limit} saved projects. Delete one, or get Pro for unlimited projects.`) }
     setBusy(true)
     try { await store.saveProject(n, code); setName(''); setMsg(`Saved "${n}".`); await refresh() } catch { setMsg('Could not save. Check your connection and try again.') }
     setBusy(false)
@@ -661,13 +698,55 @@ function Projects({ code, store, onOpen }) {
         <input className="modal-search" value={name} maxLength={80} placeholder="Name this circuit" aria-label="Project name" onChange={(e) => setName(e.target.value)} />
         <button type="submit" className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save current'}</button>
       </form>
-      {msg && <p className="empty" role="status">{msg}</p>}
+      {msg && <p className="empty" role="status">{msg}{full && <> <Link to="/pricing">See plans</Link></>}</p>}
+      {limit != null && <p className="empty">Free plan: {list?.length ?? 0} of {limit} projects used.</p>}
       {list && !list.length && <p className="empty">Nothing saved yet. Name the circuit above and save it.</p>}
       {(list || []).map((p) => (
-        <div className="item" key={p.id}>
-          <div><strong>{p.name}</strong><small>{new Date(p.updated_at).toLocaleString()}</small></div>
-          <button type="button" className="btn" onClick={() => onOpen(p.code)}>Open</button>
-          <button type="button" className="btn ghost" aria-label={`Delete ${p.name}`} onClick={() => del(p)}>Delete</button>
+        <Fragment key={p.id}>
+          <div className="item">
+            <div><strong>{p.name}</strong><small>{new Date(p.updated_at).toLocaleString()}</small></div>
+            <button type="button" className="btn" onClick={() => onOpen(p.code)}>Open</button>
+            <button type="button" className="btn" disabled={!history} title={history ? 'Earlier saved versions' : 'Version history is part of Pro'}
+              onClick={async () => { if (open === p.name) return setOpen(''); setOpen(p.name); setVersions(null); setVersions(await store.listVersions(p.name).catch(() => [])) }}>{history ? 'History' : 'History (Pro)'}</button>
+            <button type="button" className="btn ghost" aria-label={`Delete ${p.name}`} onClick={() => del(p)}>Delete</button>
+          </div>
+          {open === p.name && (
+            <div className="versions">
+              {versions === null ? <small>Loading…</small> : !versions.length ? <small>No earlier versions yet. Each time you save changes, the new version is kept here (the last 20).</small> : versions.map((v) => (
+                <div className="ver" key={v.id}><span>{new Date(v.saved_at).toLocaleString()}</span><button type="button" className="btn" onClick={() => onOpen(v.code)}>Open this version</button></div>
+              ))}
+            </div>
+          )}
+        </Fragment>
+      ))}
+    </>
+  )
+}
+
+function ExportModal({ code, circuit, allow, onNote, onDone }) {
+  const save = (name, text, type = 'text/plain') => {
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([text], { type }))
+    a.download = name
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    onDone()
+  }
+  const rows = [
+    ['Circuit code', 'Plain text. Open it again with Paste in the Code tab.', 'circuit.stutr.txt', false, () => save('circuit.stutr.txt', code)],
+    ['Picture (PNG)', 'An image of the whole canvas, to put in a report or slides.', 'circuit.png', true, async () => {
+      try { await savePng(document.querySelector('.circuit svg'), circuit.parts); onDone() } catch { onNote('Could not make the picture. Add a part first, then try again.') }
+    }],
+    ['Netlist', 'Every part and every connection as readable text.', 'circuit.net.txt', true, () => save('circuit.net.txt', netlist(circuit, 'circuit'))],
+    ['Verilog', 'Hardware description code for common parts. Unsupported parts are listed in comments.', 'circuit.v', true, () => save('circuit.v', verilog(circuit), 'text/x-verilog')],
+  ]
+  return (
+    <>
+      <p className="empty">Choose what to download.</p>
+      {rows.map(([name, hint, file, paid, go]) => (
+        <div className="item" key={file}>
+          <div><strong>{name}</strong><small>{hint}</small></div>
+          {paid && !allow ? <Link className="btn" to="/pricing">Get Pro</Link> : <button type="button" className="btn" onClick={go}>Download</button>}
         </div>
       ))}
     </>
@@ -695,7 +774,7 @@ const SHORTCUTS = [
   ['Ctrl+Z', 'Undo'], ['Ctrl+Y / Ctrl+Shift+Z', 'Redo'], ['Wheel / drag empty space', 'Zoom / pan'], ['Two fingers', 'Pinch to zoom (touch)'],
 ]
 
-function SettingsModal({ settings, setSettings, user, store, onNote, onSignOut }) {
+function SettingsModal({ settings, setSettings, user, store, onNote, onSignOut, allow }) {
   const [analytics, setAnalytics] = useState(getConsent() === 'all')
   const set = (k, v) => setSettings((s) => sanitize({ ...s, [k]: v }))
   const toggle = (k, label, hint) => (
@@ -721,6 +800,12 @@ function SettingsModal({ settings, setSettings, user, store, onNote, onSignOut }
     <>
       <div className="set-group">
         <h4>Editor</h4>
+        <label className="field">
+          <span>Theme{!allow && <small>Extra themes are part of Pro</small>}</span>
+          <select value={settings.theme} onChange={(e) => set('theme', e.target.value)}>
+            {THEMES.map(([id, nm, paid]) => <option key={id} value={id} disabled={paid && !allow}>{nm}{paid && !allow ? ' (Pro)' : ''}</option>)}
+          </select>
+        </label>
         {toggle('snap', 'Snap to grid', 'Parts jump to a 20 px grid')}
         {toggle('grid', 'Show grid dots')}
         {toggle('pinLabels', 'Show pin labels')}
@@ -826,6 +911,21 @@ export default function Dashboard() {
   const [err, setErr] = useState('')
   const [fitKey, setFitKey] = useState(0)
   const [screenId, setScreenId] = useState(null) // the LED screen open in the big view
+  const [pro, setPro] = useState(false) // has a paid plan
+  const [lib, setLib] = useState({}) // saved circuits usable as chips: name -> code
+  const allow = unlocked(pro && !!user)
+  const toLib = (list) => Object.fromEntries(list.map((p) => [chipName(p.name), p.code]))
+  useEffect(() => {
+    if (!user || !supabase) return undefined
+    let live = true
+    supabase.from('entitlements').select('status,current_period_end').maybeSingle().then(({ data }) => { if (live) setPro(hasPaid(data)) })
+    return () => { live = false }
+  }, [user])
+  useEffect(() => {
+    let live = true
+    store.listProjects().then((l) => { if (live) setLib(toLib(l)) }).catch(() => {})
+    return () => { live = false }
+  }, [store])
   const [layout, setLayout] = useState(readLayout)
   const [drag, setDrag] = useState(null) // the tab being dragged
   const [zone, setZone] = useState(null) // where it would land
@@ -913,9 +1013,10 @@ export default function Dashboard() {
     setCode(gen(next))
     setErr('')
   }
+  useEffect(() => { if (/unknown part/.test(err)) applyCode(code, false) }, [lib]) // eslint-disable-line react-hooks/exhaustive-deps
   const applyCode = (text, reset) => {
     setCode(text)
-    const r = parse(text, reset ? {} : Object.fromEntries(circuit.parts.map((p) => [p.id, p])))
+    const r = parse(text, reset ? {} : Object.fromEntries(circuit.parts.map((p) => [p.id, p])), lib)
     if (r.errs.length) return setErr(r.errs[0])
     setErr('')
     setCircuit(settle({ parts: r.parts, wires: r.wires }))
@@ -967,13 +1068,13 @@ export default function Dashboard() {
       if (settings.confirmNew && circuit.parts.length && !window.confirm('Start a new circuit? You can undo this with Ctrl+Z.')) return
       return load('')
     }
-    if (id === 'export') return exportCode()
+    if (id === 'export') return setModal('export')
     if (id === 'screen') { setTool('SCREEN'); setTab('Editor'); return setNote('Click the canvas to place an LED screen. Double-click it to open the paint view.') }
     setModal(id)
   }
 
   return (
-    <div className="DashBG">
+    <div className="DashBG" data-theme={THEMES.some(([id, , paid]) => id === settings.theme && (!paid || allow)) ? settings.theme : 'midnight'}>
       <aside className={`Tree${drawer ? ' open' : ''}`} aria-label="Menu">
         <button className="brand" type="button" aria-label="Stutr home" onClick={() => navigate('/')}>
           <img className="brand-logo" src="/logo.png" alt="" width="30" height="30" />
@@ -1054,7 +1155,7 @@ export default function Dashboard() {
           )}
           {pane('Editor', (
             <Circuit circuit={circuit} update={update} tool={tool} setTool={setTool} fitKey={fitKey} settings={settings}
-              mark={mark} undo={undo} redo={redo} canUndo={hv.u > 0} canRedo={hv.r > 0} openScreen={setScreenId} />
+              mark={mark} undo={undo} redo={redo} canUndo={hv.u > 0} canRedo={hv.r > 0} openScreen={setScreenId} lib={lib} allow={allow} onNote={setNote} />
           ))}
           {drag && <div className={`drop-preview ${zone || ''}`} aria-hidden="true" />}
         </div>
@@ -1063,16 +1164,17 @@ export default function Dashboard() {
       {note && <div className="toast" role="status">{note}</div>}
       {screenId && circuit.parts.some((p) => p.id === screenId && p.type === 'SCREEN') && (
         <Modal title={`LED screen · ${screenId}`} wide onClose={() => setScreenId(null)}>
-          <ScreenStudio c={circuit.parts.find((p) => p.id === screenId)}
+          <ScreenStudio c={circuit.parts.find((p) => p.id === screenId)} maxSize={allow ? SMAX : FREE_SCREEN} onLimit={() => setNote(`Screens bigger than ${FREE_SCREEN} by ${FREE_SCREEN} are part of Pro. See Pricing.`)}
             onChange={(o) => update((m) => ({ ...m, parts: m.parts.map((p) => (p.id === screenId ? { ...p, ...o } : p)) }))} />
         </Modal>
       )}
       {modal === 'tools' && (
         <Modal title="Parts & tools" onClose={close}>
-          <ToolPicker tool={tool} onPick={(t) => { setTool(t); close(); setTab('Editor') }} />
+          <ToolPicker tool={tool} chips={Object.keys(lib)} locked={!allow} onPick={(t) => { if (t.startsWith('chip:') && !allow) return setNote('Using your circuits as parts is part of Pro. See Pricing.'); setTool(t); close(); setTab('Editor') }} />
         </Modal>
       )}
-      {modal === 'projects' && <Modal title="Projects" onClose={close}><Projects code={code} store={store} onOpen={load} /></Modal>}
+      {modal === 'projects' && <Modal title="Projects" onClose={close}><Projects code={code} store={store} onOpen={load} onList={(l) => setLib(toLib(l))} limit={allow ? null : FREE_PROJECTS} history={allow} /></Modal>}
+      {modal === 'export' && <Modal title="Export" onClose={close}><ExportModal code={code} circuit={circuit} allow={allow} onNote={setNote} onDone={close} /></Modal>}
       {modal === 'examples' && (
         <Modal title="Examples" onClose={close}>
           {EXAMPLES.map((x) => (
@@ -1097,7 +1199,7 @@ export default function Dashboard() {
       )}
       {modal === 'settings' && (
         <Modal title="Settings" onClose={close}>
-          <SettingsModal settings={settings} setSettings={setSettings} user={user} store={store} onNote={setNote}
+          <SettingsModal settings={settings} setSettings={setSettings} user={user} store={store} onNote={setNote} allow={allow}
             onSignOut={async () => { await signOut(); navigate('/') }} />
         </Modal>
       )}

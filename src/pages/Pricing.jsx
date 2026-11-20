@@ -15,12 +15,12 @@ const LAUNCH_END = '' // e.g. 'Dec 31'. Leave empty until you pick a date
 const TIERS = [
   {
     name: 'Free', who: 'Students, hobbyists, anyone trying it out', price: '$0', unit: 'forever',
-    features: ['Core gates, inputs and outputs', 'Basic circuits, enough for simple to medium builds', 'Code and visual editor kept in sync', 'Saved in your browser', 'A limited number of projects'],
+    features: ['Every part, with the code editor and canvas always in sync', 'Save up to 5 projects, in your browser or your account', 'Sign in to open your work on any device', 'LED screens up to 64 by 64', 'Example circuits, including a 4-bit CPU'],
     cta: { label: 'Start free', to: '/start' },
   },
   {
     name: 'Pro', who: 'Serious individual builders', month: '$8', year: '$69', regMonth: '$12', regYear: '$99', plans: { month: 'pro_month', year: 'pro_year' }, buy: 'Get Pro', featured: true, badge: 'Most popular',
-    features: ['Everything in Free', 'Cloud save and multi-device sync', 'Unlimited projects and complexity', 'Advanced components and subcircuits', 'Export: PNG, netlist, and HDL later', 'History and versioning', 'Early access to Hardware Lab', 'Themes'],
+    features: ['Everything in Free', 'Unlimited saved projects', 'Subcircuits: use your own circuits as parts', 'LED screens up to 2048 by 2048', 'Version history for every project', 'Export as PNG, netlist and Verilog', 'Extra color themes', 'Early access to Hardware Lab when it launches'],
   },
   {
     name: 'Student', who: 'Students with a .edu address', month: '$4', year: '$39', regMonth: '$6', regYear: '$59', plans: { month: 'student_month', year: 'student_year' }, buy: 'Get Student', tag: 'About 50% off Pro',
@@ -32,7 +32,7 @@ const TIERS = [
   },
   {
     name: 'Founder', who: 'Early supporters', price: '$99', unit: 'one-time payment', tag: 'Early launch offer', wide: true, plan: 'founder', buy: 'Become a Founder',
-    features: ['Pro, forever', 'Early access to Hardware Lab', 'Helps fund the launch'],
+    features: ['Pro, forever', 'Early access to Hardware Lab when it launches', 'Helps fund the launch'],
   },
 ]
 
@@ -94,7 +94,7 @@ export default function Pricing() {
         <div className="tiers">{TIERS.filter((t) => !t.wide).map(card)}</div>
         <div className="tiers-wide">{TIERS.filter((t) => t.wide).map(card)}</div>
         <p className="pr-note">Launch prices are lower than the regular prices shown crossed out{LAUNCH_END ? ` and end ${LAUNCH_END}` : ', and the regular prices will apply after launch'}. </p>
-        <p className="pr-note">{BILLING_ON ? 'Payments are handled by Polar, our merchant of record, which also collects any sales tax or VAT. ' : 'Paid plans are not open yet. '}Cloud sync, history, subcircuits, class tools and Hardware Lab are still being built, so what is listed for them is the plan, not what ships today.</p>
+        {BILLING_ON && <p className="pr-note">Payments are handled by Polar, our merchant of record, which also collects any sales tax or VAT.</p>}
         <p><Link to="/start" className="ghost-link">Start building for free in the meantime</Link></p>
       </main>
       <footer className="lp-foot">

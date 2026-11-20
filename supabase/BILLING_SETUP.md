@@ -74,3 +74,11 @@ The Profile and plan panel in the app shows each person's plan and a button that
 2. **Deploy the function:** Edge Functions -> Deploy a new function -> Via Editor, name `polar-portal`, paste all of `supabase/dashboard/polar-portal.ts`. Leave JWT verification ON (unlike the webhook). With the CLI: `npx supabase functions deploy polar-portal`.
 3. **Test:** sign in as someone who has paid, open the menu -> Profile & plan. You should see the plan and renewal date, and **Manage plan and billing** should open Polar.
 4. If the Polar page does not offer "Change plan", check your Polar organization's subscription settings. A person who never paid has no billing account yet, so the button is hidden for them.
+
+---
+
+## Pro features: what to switch on
+1. **Version history:** run `supabase/versions.sql` once in the SQL Editor. Without it everything still works, but cloud history stays empty (browser-only users are not affected).
+2. **Limits start only when `VITE_BILLING_ON=1`.** Until then everything is unlocked, so nobody is stuck behind a paywall before payments work. With it on, the Free plan gets: 5 saved projects, LED screens up to 64 by 64, Midnight theme only, no version history, no PNG/netlist/Verilog export, and no placing your own circuits as parts. Opening and running anything you already made always works.
+3. **Where the limits are set:** `src/lib/gate.js` (`FREE_PROJECTS`, `FREE_SCREEN`, and which themes are paid).
+4. **Good to know:** these limits are enforced in the app, not in the database, so someone technical could get around them. That is fine to start with. If it ever matters, the project limit can be enforced in Supabase too.

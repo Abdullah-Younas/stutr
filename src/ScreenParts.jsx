@@ -29,7 +29,7 @@ export function ScreenView({ c, w, h, onOpen }) {
 }
 
 /* The big view: paint with the mouse, fill, patterns, import a picture, change size and colors. */
-export function ScreenStudio({ c, onChange }) {
+export function ScreenStudio({ c, onChange, maxSize = SMAX, onLimit }) {
   const w = SW(c), h = SH(c), bits = W(c), hex = hexOk(c.text), lut = lutFor(bits, hex)
   const cv = useRef(null)
   const live = useRef(null) // the buffer we are painting into, so a fast stroke never loses a dab
@@ -80,7 +80,8 @@ export function ScreenStudio({ c, onChange }) {
 
   const act = (fn) => () => { const st = state(); fn(st); emit(st) }
   const setSize = (nw, nh) => {
-    nw = clamp(Math.round(nw) || 1, 1, SMAX); nh = clamp(Math.round(nh) || 1, 1, SMAX)
+    if (nw > maxSize || nh > maxSize) onLimit?.()
+    nw = clamp(Math.round(nw) || 1, 1, maxSize); nh = clamp(Math.round(nh) || 1, 1, maxSize)
     const st = resized(state(), nw, nh)
     live.current = st
     setDraft(null)
@@ -117,14 +118,14 @@ export function ScreenStudio({ c, onChange }) {
       <div className="scr-row">
         <span className="scr-lab">Size</span>
         {SIZES.filter((n) => n <= SMAX).map((n) => (
-          <button key={n} type="button" className={`chip${w === n && h === n ? ' on' : ''}`} onClick={() => setSize(n, n)}>{n}</button>
+          <button key={n} type="button" className={`chip${w === n && h === n ? ' on' : ''}`} disabled={n > maxSize} title={n > maxSize ? 'Bigger screens are part of Pro' : undefined} onClick={() => setSize(n, n)}>{n}</button>
         ))}
       </div>
       <div className="scr-row">
         <label className="scr-lab" htmlFor="scr-w">Custom</label>
-        <input id="scr-w" type="number" min="1" max={SMAX} value={dw} aria-label="Width" onChange={(e) => setDraft({ w: e.target.value, h: dh })} />
+        <input id="scr-w" type="number" min="1" max={maxSize} value={dw} aria-label="Width" onChange={(e) => setDraft({ w: e.target.value, h: dh })} />
         <span>×</span>
-        <input type="number" min="1" max={SMAX} value={dh} aria-label="Height" onChange={(e) => setDraft({ w: dw, h: e.target.value })} />
+        <input type="number" min="1" max={maxSize} value={dh} aria-label="Height" onChange={(e) => setDraft({ w: dw, h: e.target.value })} />
         <button type="button" className="btn" disabled={!draft} onClick={() => setSize(+dw, +dh)}>Apply</button>
         <select value={bits} aria-label="Colors" onChange={(e) => setDepth(+e.target.value)}>
           {DEPTHS.map(([b, name]) => <option key={b} value={b}>{name}</option>)}

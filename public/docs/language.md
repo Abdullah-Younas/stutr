@@ -117,6 +117,25 @@ A few parts have friendlier words in code. Both forms work when you type, but th
 | Register | `reg` | `register` |
 | Counter | `ctr` | `counter` |
 
+## Using a saved circuit as a part
+
+Any circuit you have saved in Projects can be used as a part in another circuit. Its name becomes the word you write, spelled in lowercase with underscores (a project called "Half Adder" is `half_adder`). The input and output pins inside it become the part's pins, in the order they appear in its code, and the pins use the names you gave them.
+
+```text
+# half_adder is a saved circuit with inputs a, b and outputs sum, carry
+x = input(1)
+y = input(1)
+u = half_adder(x, y)
+s = output(u.sum)
+c = output(u.carry)
+```
+
+- Refer to a chip's outputs by the names of its output pins: `u.sum` and `u.carry`, or by number.
+- A chip keeps its own memory: a counter or flip-flop inside it holds its value between clock edges.
+- A chip can contain other chips, but never itself.
+- Inside a chip, use an input pin for the clock, not a clock part, so the outer circuit controls the timing.
+- Using chips as parts is part of the Pro plan. Circuits that already use them still open and run on any plan.
+
 ## Where parts go
 
 Code has no coordinates. A part keeps its place on the canvas as long as its name and type stay the same. New parts are placed automatically, left to right by how many steps they are from an input. Drag them wherever you like. Moving things on the canvas never changes the code.

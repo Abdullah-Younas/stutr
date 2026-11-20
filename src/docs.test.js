@@ -9,8 +9,9 @@ const blocks = PAGES.flatMap((p) => p.sections.flatMap((s) => s.blocks.map((b) =
 
 describe('documentation stays true to the code', () => {
   it('documents every part in the engine, and nothing that does not exist', () => {
-    expect(Object.keys(PARTS).sort()).toEqual(Object.keys(DEFS).sort())
-    expect(ALL_PARTS.length).toBe(Object.keys(DEFS).length)
+    const fixed = Object.keys(DEFS).filter((t) => t !== 'CHIP') // chips are made by people, see the Subcircuits guide
+    expect(Object.keys(PARTS).sort()).toEqual(fixed.sort())
+    expect(ALL_PARTS.length).toBe(fixed.length)
   })
   it('every part example is a circuit that loads without errors', () => {
     for (const f of ALL_PARTS) expect(parse(f.example).errs, f.type).toEqual([])
@@ -64,5 +65,13 @@ describe('documentation is readable by AI tools', () => {
   })
   it('docs pages are indexable and in the routes list', () => {
     for (const p of PAGES) expect(ROUTES.find((r) => r.path === (p.slug ? `/docs/${p.slug}` : '/docs')).index).toBe(true)
+  })
+})
+
+describe('chip examples in the docs', () => {
+  it('the saved-circuit example works with a matching library', () => {
+    const block = blocks.find((x) => x.page === 'language' && x.section === 'chips' && x.b.t === 'code').b
+    const lib = { half_adder: 'a = input(0)\nb = input(0)\ns = xor(a, b)\nc = and(a, b)\nsum = output(s)\ncarry = output(c)' }
+    expect(parse(block.x, {}, lib).errs).toEqual([])
   })
 })

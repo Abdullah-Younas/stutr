@@ -166,6 +166,11 @@ export const DEFS = {
       return { px: s.px, w, h, v: s.v + 1 } // the pixels change in place: copying 640,000 of them per tick would be far too slow
     },
   }),
+  // a subcircuit: another circuit (a saved project) used as one part. Its pins are the IN and OUT parts inside it.
+  CHIP: def('', (c) => c.chip.ins, (c) => c.chip.outs, null, {
+    iw: (c) => c.chip.iw, ow: (c) => c.chip.ow,
+    dim: (c) => [Math.max(90, 10 * (c.chip.name.length + 2)), Math.max(60, 20 * (Math.max(c.chip.ins.length, c.chip.outs.length) + 1))],
+  }),
   TEXT: def('', [], [], () => [], { note: true, attr: 'Text', adef: 'text', dim: (c) => [Math.max(40, 9 * TX(c).length + 16), 30] }),
 }
 
@@ -219,7 +224,8 @@ export const sim = (parts, wires) => {
       const tag = c.text || c.id
       const drv = [c, ...parts].find((p) => p.type === 'TUNNEL' && (p.text || p.id) === tag && wires.some((w) => w.to === p.id))
       r = [drv ? ins(drv, s)[0] : null]
-    } else if (d.seq) r = d.rd ? d.q(c, ins(c, s)) : d.q(c)
+    } else if (c.type === 'CHIP') r = stepChip(c, ins(c, s)).outs
+    else if (d.seq) r = d.rd ? d.q(c, ins(c, s)) : d.q(c)
     else r = d.f(ins(c, s), c, mk(W(c)))
     const ow = OW(c)
     return (memo[id] = r.map((v, k) => (v == null ? null : +v & mk(ow[k] ?? 1))))
@@ -235,6 +241,13 @@ export const settle = (circuit) => {
     let changed = false
     parts = parts.map((c) => {
       const d = DEFS[c.type]
+      if (c.type === 'CHIP') {
+        const { next } = stepChip(c, sm.ins(c))
+        const was = c.s?.parts ?? c.chip.parts
+        if (!next.parts.some((p, i) => p.s !== was[i]?.s || p.pc !== was[i]?.pc)) return c
+        changed = true
+        return { ...c, s: next }
+      }
       if (!d.seq) return c
       const ins = sm.ins(c)
       const clk = !!ins[d.clk]
@@ -245,6 +258,14 @@ export const settle = (circuit) => {
     if (!changed) break
   }
   return { ...circuit, parts }
+}
+
+// Runs the circuit inside a chip with its pins set to `ins`. The inner circuit's own clocked parts keep their state in `next`.
+function stepChip(c, ins) {
+  const base = c.s?.parts ? c.s : { parts: c.chip.parts, wires: c.chip.wires }
+  const next = settle({ ...base, parts: base.parts.map((p) => { const k = c.chip.ins.indexOf(p.id); return k < 0 ? p : { ...p, v: ins[k] ?? 0 } }) })
+  const sm = sim(next.parts, next.wires)
+  return { next, outs: c.chip.outs.map((id) => (sm.by[id] ? sm.ins(sm.by[id])[0] : 0)) }
 }
 
 /* ================= the language ================= */
@@ -261,6 +282,8 @@ export const META = {
   TUNNEL: { akey: 'tag' }, PULL: { akey: 'to' }, TRANS: { akey: 'kind' }, TEXT: { akey: 'text' },
 }
 export const M = (t) => META[t] || {}
+// names a person can use after the dot: `s.carry`. A chip's output names are its OUT pins.
+export const outNames = (p) => (p?.type === 'CHIP' ? p.chip.outs : M(p?.type).names || [])
 export const PREF = { IN: 'input', CLK: 'clock', OUT: 'output', BTN: 'button', CONST: 'constant', GND: 'ground', JOY: 'joystick', KEYB: 'keyboard' }
 export const ALIAS = { ...Object.fromEntries(Object.entries(PREF).map(([t, k]) => [k, t])), splitter: 'SPLIT', combiner: 'MERGE', register: 'REG', counter: 'CTR' }
 export const typeOf = (w) => ALIAS[w.toLowerCase()] ?? (DEFS[w.toUpperCase()] ? w.toUpperCase() : null)
@@ -274,7 +297,7 @@ export const gen = ({ parts, wires }) =>
       const w = wires.find((w) => w.to === c.id && w.pin === i)
       const s = w && parts.find((p) => p.id === w.from)
       if (!s) return 'None'
-      const nm = M(s.type).names?.[w.fp || 0]
+      const nm = outNames(s)[w.fp || 0]
       return w.from + (w.fp ? (nm ? `.${nm}` : `[${w.fp}]`) : '')
     })
     while (refs.length && refs[refs.length - 1] === 'None') refs.pop()
@@ -286,7 +309,7 @@ export const gen = ({ parts, wires }) =>
     if (c.type === 'SCREEN') refs.push(`width=${SW(c)}`, `height=${SH(c)}`)
     else if (c.n != null && me.nkey && c.type !== 'CONST') refs.push(`${me.nkey}=${c.n}`)
     if (c.text && me.akey && ins.length) refs.push(`${me.akey}=${JSON.stringify(c.text)}`)
-    return `${c.id} = ${PREF[c.type] ?? c.type.toLowerCase()}${c.bits != null ? `<${c.bits}>` : ''}(${refs.join(', ')})`
+    return `${c.id} = ${c.type === 'CHIP' ? c.chip.name : PREF[c.type] ?? c.type.toLowerCase()}${c.bits != null && c.type !== 'CHIP' ? `<${c.bits}>` : ''}(${refs.join(', ')})`
   }).join('\n')
 
 /* ================= code -> circuit ================= */
@@ -305,19 +328,42 @@ export const lit = (s) => {
   return /^-?(0x[\da-f]+|0b[01]+|\d+)$/i.test(s) ? Number(s) : undefined
 }
 
-export const parse = (text, prev = {}) => {
-  const parts = [], wires = [], errs = [], refs = []
+// a saved circuit turned into a chip definition. `lib` maps chip name -> circuit code. A chip cannot contain itself.
+export function chipFrom(name, lib, depth = 0) {
+  if (depth > 4) return { error: 'chips are nested too deeply' }
+  const { [name]: code, ...rest } = lib
+  const sub = parse(code, {}, rest, depth + 1)
+  if (sub.errs.length) return { error: sub.errs[0] }
+  const ins = sub.parts.filter((p) => p.type === 'IN'), outs = sub.parts.filter((p) => p.type === 'OUT')
+  if (!ins.length && !outs.length) return { error: 'it needs at least one input pin or output pin' }
+  return { name, parts: sub.parts, wires: sub.wires, ins: ins.map((p) => p.id), iw: ins.map(W), outs: outs.map((p) => p.id), ow: outs.map(W) }
+}
+// the word used for a saved circuit in code: letters, digits and underscores, never a part word
+export const chipName = (projectName) => {
+  let s = String(projectName).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+  if (!s || /^\d/.test(s)) s = 'c_' + s
+  return typeOf(s) ? 'chip_' + s : s
+}
+
+export const parse = (text, prev = {}, lib = {}, level = 0) => {
+  const parts = [], wires = [], errs = [], refs = [], chips = {}
   text.split('\n').forEach((raw, i) => {
     const n = i + 1
     const line = raw.replace(/("(?:[^"\\]|\\.)*")|(?:#|\/\/).*/g, (m, q) => q || '').trim().replace(/;$/, '').trim()
     if (!line) return
     const m = line.match(/^([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)\s*(?:<\s*(\d+)\s*>)?\s*\(([\s\S]*)\)$/)
     if (!m) return errs.push(`Line ${n}: can't read "${line}". Write: name = part<bits>(inputs)`)
-    const type = typeOf(m[2])
+    let type = typeOf(m[2]), chip = null
+    if (!type && lib[m[2]] != null) {
+      chip = chips[m[2]] ??= chipFrom(m[2], lib, level)
+      if (chip.error) return errs.push(`Line ${n}: chip "${m[2]}" cannot be used: ${chip.error}`)
+      type = 'CHIP'
+    }
     if (!type) return errs.push(`Line ${n}: unknown part "${m[2]}"`)
     if (parts.some((p) => p.id === m[1])) return errs.push(`Line ${n}: name "${m[1]}" is used twice`)
     const p = { id: m[1], type }, me = M(type), pos = []
-    if (m[3]) p.bits = clamp(+m[3], 1, 16)
+    if (chip) p.chip = chip
+    if (m[3] && !chip) p.bits = clamp(+m[3], 1, 16)
     for (const a of splitArgs(m[4])) {
       const kw = a.match(/^([A-Za-z_]\w*)\s*=\s*([\s\S]+)$/)
       if (!kw) { pos.push(a); continue }
@@ -343,7 +389,7 @@ export const parse = (text, prev = {}) => {
   refs.forEach(({ src, to, pin, n }) => {
     const m = src.match(/^([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*)|\[(\d+)\])?$/)
     const s = m && parts.find((p) => p.id === m[1])
-    const fp = !m ? -1 : m[3] != null ? +m[3] : m[2] ? (M(s?.type).names || []).indexOf(m[2]) : 0
+    const fp = !m ? -1 : m[3] != null ? +m[3] : m[2] ? outNames(s).indexOf(m[2]) : 0
     if (!s || fp < 0 || fp >= OUTS(s).length) errs.push(`Line ${n}: "${src}" is not an output of any part`)
     else wires.push({ from: s.id, fp, to, pin })
   })

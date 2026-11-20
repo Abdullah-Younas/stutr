@@ -1,4 +1,4 @@
-export const DEFAULTS = { hz: 2, snap: true, grid: true, pinLabels: true, names: true, wires: 'elbow', autosave: true, confirmNew: true }
+export const DEFAULTS = { hz: 2, snap: true, grid: true, pinLabels: true, names: true, wires: 'elbow', autosave: true, confirmNew: true, theme: 'midnight' }
 export const HZ = [1, 2, 5, 10, 20, 50, 100]
 const FLAGS = ['snap', 'grid', 'pinLabels', 'names', 'autosave', 'confirmNew']
 
@@ -9,6 +9,7 @@ export const sanitize = (o) => {
   if (HZ.includes(Number(o.hz))) s.hz = Number(o.hz)
   for (const k of FLAGS) if (typeof o[k] === 'boolean') s[k] = o[k]
   if (o.wires === 'elbow' || o.wires === 'straight') s.wires = o.wires
+  if (['midnight', 'terminal', 'ember', 'violet'].includes(o.theme)) s.theme = o.theme
   return s
 }
 

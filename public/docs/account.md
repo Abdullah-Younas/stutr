@@ -19,13 +19,13 @@ Stutr is free to use. Paid plans add convenience and, as they are built, more fe
 
 | Plan | For | What it is |
 | --- | --- | --- |
-| Free | Learning and building | The core parts, code and canvas in sync, and saving in your browser or account. |
-| Pro | Serious builders | Everything in Free plus the paid features as they arrive: unlimited projects, cloud sync across devices, advanced components, exports and history. |
+| Free | Learning and building | Every part, the code editor and canvas in sync, up to 5 saved projects (in your browser or your account), LED screens up to 64 by 64, and the example circuits. |
+| Pro | Serious builders | Everything in Free plus unlimited projects, your own circuits as parts, LED screens up to 2048 by 2048, version history, export to PNG, netlist and Verilog, extra themes, and early access to Hardware Lab when it launches. |
 | Student | Students with a school email | The same as Pro at a lower price. Needs an account whose email ends in .edu, .edu.xx or .ac.xx. |
 | Classroom | Teachers and schools | Class tools for many students. Coming soon. |
 | Founder | Early supporters | Pro for life, paid once. |
 
-> **Note:** Some paid features are still being built. The pricing page says which plans can be bought today.
+Limits apply only to the Free plan. If a paid plan ends, your circuits and projects stay yours: you can still open, run and export the code of everything you made.
 
 ## Your profile and plan
 

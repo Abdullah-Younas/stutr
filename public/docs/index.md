@@ -64,4 +64,3 @@ Every part has a name, and the name is how code and wires refer to it. Rename a 
 - Widths are 1 to 16 bits.
 - A combinational loop (a wire feeding back into its own logic without a flip-flop) reads as floating. Use a flip-flop to build memory.
 - Memory contents (RAM, registers and so on) and LED screen pixels are not saved in the circuit code.
-- There are no subcircuits yet.

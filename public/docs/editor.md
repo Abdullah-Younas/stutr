@@ -70,16 +70,41 @@ Select several parts with the Select tool and the panel offers Delete all.
 | Drag empty space | Pan |
 | Two fingers (touch) | Pinch to zoom and drag to pan |
 
+## Your circuits as parts
+
+Save a circuit in Projects, then open Parts and tools and look under My circuits. Pick one and click the canvas to place it as a single part. Its input and output pins become the part's pins. Change the saved circuit and open the other circuit again to use the new version. See [the language guide](/docs/language) for how chips look in code.
+
+Using your circuits as parts is part of the Pro plan.
+
+## Version history
+
+Every time you save a project with changes, Stutr keeps that version. The last 20 versions of each project are kept. In Projects press History next to a project, then Open this version to load an earlier one. Save again to make it the current version. Version history is part of the Pro plan.
+
+## Exporting
+
+| Export | What you get | Plan |
+| --- | --- | --- |
+| Circuit code | The circuit as text (`circuit.stutr.txt`). | Free |
+| Picture (PNG) | An image of the whole canvas, for reports and slides. | Pro |
+| Netlist | Every part and every connection as readable text. | Pro |
+| Verilog | Hardware description code for the common parts: pins, gates, multiplexers, adders, comparators, splitters, extenders, flip-flops, registers and counters, plus chips as their own modules. Parts it cannot export are listed in comments at the top and their outputs are left undriven, so check the file before using it. | Pro |
+
+Open Export from the menu to choose one.
+
+## Themes
+
+The default theme is Midnight. Pro adds Terminal (green), Ember (orange) and Violet. Choose one in Settings.
+
 ## The menu
 
 | Item | What it does |
 | --- | --- |
-| Projects | Save the current circuit under a name, open or delete saved ones. |
+| Projects | Save the current circuit under a name, open or delete saved ones, and open earlier versions. |
 | Create | Start a new empty circuit. Undo brings the old one back. |
 | Parts and tools | Every tool and part, grouped. |
 | Examples | Ready-made circuits to open and learn from. |
 | LED screen | Picks the LED screen part to place. |
-| Export code | Downloads the circuit as `circuit.stutr.txt`. |
+| Export | Download the circuit as code, a picture, a netlist or Verilog. |
 | Documentation | A quick reference and a link to these docs. |
 | Settings | Editor options, privacy and your data. |
 | Profile and plan | Your account, your plan and billing. |
@@ -89,7 +114,7 @@ Select several parts with the Select tool and the panel offers Delete all.
 
 - Snap to grid: parts jump to a 20 px grid.
 - Show the grid, pin labels and part names.
-- Wire style: right angles or straight lines.
+- Theme and wire style: right angles or straight lines.
 - Autosave my circuit: reopens where you left off.
 - Confirm before starting a new circuit.
 - Analytics: off unless you allow it.

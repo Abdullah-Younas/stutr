@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buf, dims, gen, parse, settle, sim } from './engine'
+import { buf, chipName, dims, gen, parse, settle, sim } from './engine'
 import { draw, inkOf, lutFor, resized, stroke } from './screen'
 import { EXAMPLES } from './examples'
 
@@ -127,5 +127,52 @@ describe('LED screen', () => {
     draw(cv, new Uint16Array([1, 0, 0, 1]), 2, 2, lutFor(1, '#ff0000'))
     const s = cv.width / 2
     expect(new Set(new Uint32Array(drawn.data.buffer).subarray(0, s)).size).toBe(1) // first block is one solid color
+  })
+})
+
+describe('subcircuits (chips)', () => {
+  const lib = {
+    half_adder: 'a = input(0)\nb = input(0)\ns = xor(a, b)\nc = and(a, b)\nsum = output(s)\ncarry = output(c)',
+    toggler: 'ck = input(0)\nt = constant(1)\nff = tff(t, ck)\nq = output(ff.q)',
+  }
+  const run = (code, set = {}) => {
+    let c = settle(parse(code, {}, lib))
+    for (const [id, v] of Object.entries(set)) c = settle({ ...c, parts: c.parts.map((p) => (p.id === id ? { ...p, v } : p)) })
+    return c
+  }
+  const val = (c, id) => { const m = sim(c.parts, c.wires); return m.ins(m.by[id])[0] }
+
+  it('a saved circuit works as one part with named pins', () => {
+    const code = 'x = input(1)\ny = input(1)\nu = half_adder(x, y)\ns = output(u.sum)\nc = output(u.carry)'
+    const c = run(code)
+    expect(parse(code, {}, lib).errs).toEqual([])
+    expect(c.parts.find((p) => p.id === 'u').type).toBe('CHIP')
+    expect([val(c, 's'), val(c, 'c')]).toEqual([0, 1]) // 1 + 1 = binary 10
+    const c2 = run(code, { y: 0 })
+    expect([val(c2, 's'), val(c2, 'c')]).toEqual([1, 0])
+  })
+  it('a chip keeps its own clocked state', () => {
+    const code = 'ck = input(0)\nu = toggler(ck)\nq = output(u.q)'
+    let c = run(code)
+    expect(val(c, 'q')).toBe(0)
+    for (const v of [1, 0]) c = settle({ ...c, parts: c.parts.map((p) => (p.id === 'ck' ? { ...p, v } : p)) })
+    expect(val(c, 'q')).toBe(1) // one rising edge flipped it
+    for (const v of [1, 0]) c = settle({ ...c, parts: c.parts.map((p) => (p.id === 'ck' ? { ...p, v } : p)) })
+    expect(val(c, 'q')).toBe(0)
+  })
+  it('writes a chip back out as code, and loads chips that use chips', () => {
+    const code = 'x = input(1)\ny = input(0)\nu = half_adder(x, y)\ns = output(u.sum)'
+    expect(gen(parse(code, {}, lib))).toContain('u = half_adder(x, y)')
+    const lib2 = { ...lib, full: 'p = input(1)\nq = input(1)\nh = half_adder(p, q)\no = output(h.sum)' }
+    const c = settle(parse('i = input(1)\nj = input(0)\nf = full(i, j)\nr = output(f.o)', {}, lib2))
+    expect(val(c, 'r')).toBe(1) // the outer pins drive the inner ones: 1 xor 0
+  })
+  it('explains chips that cannot be used, and never recurses forever', () => {
+    expect(parse('u = nothing()', {}, lib).errs[0]).toMatch(/unknown part/)
+    expect(parse('u = empty()', {}, { empty: 'g = constant(1)' }).errs[0]).toMatch(/input pin or output pin/)
+    expect(parse('u = loop()', {}, { loop: 'k = loop()\ny = output(k)' }).errs[0]).toMatch(/cannot be used/) // a chip cannot contain itself
+    expect(chipName('My Adder 4-bit!')).toBe('my_adder_4_bit')
+    expect(chipName('and')).toBe('chip_and')
+    expect(chipName('2fast')).toBe('c_2fast')
   })
 })
